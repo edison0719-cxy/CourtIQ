@@ -1,0 +1,23 @@
+{
+  "name": "courtiq",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs cloud/*.test.mjs",
+    "cloud:dev": "wrangler dev --config wrangler.local.jsonc",
+    "cloud:deploy": "node cloud/check.mjs --configured && wrangler deploy --config wrangler.local.jsonc",
+    "cloud:check": "node cloud/check.mjs",
+    "cloud:seed": "node cloud/seed.mjs",
+    "cloud:configure": "node cloud/configure.mjs",
+    "test:integration": "node cloud/integration.mjs"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "0.3.7",
+    "jose": "6.2.13"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0",
+    "miniflare": "4.20260730.0",
+    "esbuild": "0.25.12"
+  }
+}

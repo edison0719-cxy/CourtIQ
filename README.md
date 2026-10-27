@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A local workbench for fixed-camera badminton video analysis and statistical research: from calibrated movement trajectories to reproducible training comparisons. The interface supports Chinese and English.
+A workbench for fixed-camera badminton video analysis and statistical research, with local and authenticated Cloudflare modes: from calibrated movement trajectories to reproducible training comparisons. The interface supports Chinese and English. For the hosted edition, start with the [Cloudflare deployment guide](CLOUD_DEPLOY.md); the quick start below runs locally.
 
 ## Start the workbench
 
@@ -63,7 +63,7 @@ Method references: [time-series block bootstrap](https://www.stat.cmu.edu/~cshal
 
 Select **City sports planning** or open <http://127.0.0.1:8765/#city> to explore the progression from athlete feedback to venue pilots and wider sports services, with an evaluation framework for training quality and service expansion.
 
-Venue summaries group local training records by their venue field and show registered venues, training records, completed analyses, and sessions with coach notes. Public demos are excluded. Records without a venue are listed separately and do not increase the registered-venue count. **Import a venue training video** opens the import dialog with the venue field focused; existing venue rows open their latest session.
+Venue summaries group training records available in the current workspace by their venue field and show registered venues, training records, completed analyses, and sessions with coach notes. Public demos are excluded. Records without a venue are listed separately and do not increase the registered-venue count. **Import a venue training video** opens the import dialog with the venue field focused; existing venue rows open their latest session.
 
 These counts describe service documentation, not demonstrated training improvement. Pilot evaluation covers review efficiency, feedback comprehension, performance on standardized tasks, and service costs. City-scale expansion additionally requires multi-venue booking, utilization, demand, and transport-accessibility data. Automated facility siting, resource optimization, and causal evaluation of training effects are not implemented. This page also supports both interface languages.
 
@@ -138,3 +138,7 @@ node --test tests/*.test.cjs
 ```
 
 Encoded videos used by unit tests are temporary fixtures and never appear as training records in the workbench. Real end-to-end validation used the public upstream sample and covered shuttle tracking, player tracking, CSV, charts, and H.264 output. Successful inference alone does not establish research-grade tactical accuracy; review camera geometry, calibration, and observation quality when introducing new training footage.
+
+## Cloudflare edition
+
+Authenticated cloud deployment now includes resumable private uploads, D1 training records, queued CPU containers and durable R2 analysis artifacts. The local workstation remains available. See the [Cloudflare deployment guide](CLOUD_DEPLOY.md) ([中文](CLOUD_DEPLOY.zh-CN.md)) for configuration, validation and the remaining account/Docker prerequisites.

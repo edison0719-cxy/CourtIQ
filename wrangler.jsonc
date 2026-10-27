@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "courtiq",
+  "main": "cloud/index.js",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {"directory": "./static", "binding": "ASSETS", "run_worker_first": true},
+  "vars": {
+    "PUBLIC_ORIGIN": "",
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": "",
+    "MAX_ANALYSIS_SECONDS": "300",
+    "MAX_JOB_SECONDS": "7200"
+  },
+  "r2_buckets": [{"binding": "BUCKET", "bucket_name": "courtiq-private"}],
+  "d1_databases": [{"binding": "DB", "database_name": "courtiq", "database_id": "", "migrations_dir": "cloud/migrations"}],
+  "queues": {
+    "producers": [{"binding": "JOBS", "queue": "courtiq-analysis"}],
+    "consumers": [{"queue": "courtiq-analysis", "max_batch_size": 1, "max_batch_timeout": 1, "max_concurrency": 1, "max_retries": 10, "retry_delay": 30}]
+  },
+  "durable_objects": {"bindings": [{"name": "ANALYZER", "class_name": "AnalysisContainer"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["AnalysisContainer"]}],
+  "containers": [{"class_name": "AnalysisContainer", "image": "./Dockerfile", "instance_type": "standard-4", "max_instances": 2}],
+  "triggers": {"crons": ["*/2 * * * *"]},
+  "observability": {"enabled": true, "head_sampling_rate": 0.1}
+}

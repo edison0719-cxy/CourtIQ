@@ -1,0 +1,2 @@
+# Generate with: openssl rand -hex 32. Put the production value in `wrangler secret put INTERNAL_SECRET`.
+INTERNAL_SECRET=

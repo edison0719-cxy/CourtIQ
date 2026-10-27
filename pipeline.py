@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parent
 UPSTREAM = ROOT/'vendor'/'badminton-pipeline-repro'
@@ -65,8 +66,13 @@ def probe_video(path, preview_path):
 def run_command(args, log_path, env=None):
     with open(log_path,'a',encoding='utf-8') as log:
         log.write('\n$ '+' '.join(str(v) for v in args)+'\n');log.flush()
+        timeout=24*60*60
+        deadline=(env or os.environ).get('COURTIQ_JOB_DEADLINE')
+        if deadline:
+            timeout=min(timeout,float(deadline)-time.time())
+            if timeout<=0:raise TimeoutError('Cloud analysis time limit exceeded.')
         result=subprocess.run([str(v) for v in args],stdout=log,stderr=subprocess.STDOUT,
-                              cwd=ROOT,env=env,timeout=24*60*60)
+                              cwd=ROOT,env=env,timeout=timeout)
     if result.returncode:
         raise RuntimeError(f'分析步骤退出（代码 {result.returncode}），请查看运行日志。')
 

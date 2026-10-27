@@ -1,8 +1,9 @@
-/* CourtIQ: local-only UI. Every metric comes from an actual completed run. */
+/* CourtIQ local and authenticated cloud UI. Every metric comes from an actual completed run. */
 const $ = id => document.getElementById(id);
 let language = 'zh';
 try { language = localStorage.getItem('courtiq.language') === 'en' ? 'en' : 'zh'; } catch {}
-const t = (key, values) => window.CourtIQI18n.translate(key, language, values);
+const cloudLabels={'本地工作空间':'私有云工作空间','本地训练记录':'私有训练记录','本机训练档案':'私有训练档案','本机档案':'账号内档案','本地':'私有'};
+const t = (key, values) => window.CourtIQI18n.translate(runtime?.deployment==='cloud'?(cloudLabels[key]||key):key, language, values);
 const locale = () => language === 'en' ? 'en-US' : 'zh-CN';
 const paths = {
  play:'m8 5 11 7-11 7Z', plus:'M12 5v14M5 12h14', layers:'m12 3 10 5-10 5L2 8Zm-10 9 10 5 10-5M2 16l10 5 10-5',
@@ -176,6 +177,10 @@ function renderVideo() {
 }
 document.querySelectorAll('#video-tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.view;renderVideo();});
 function renderPoints() {
+ const cloud=runtime?.deployment==='cloud';
+ $('device').disabled=cloud;if(cloud)$('device').value='cpu';
+ if(cloud){const duration=$('duration');for(const option of duration.options)option.disabled=Number(option.value)>runtime.max_analysis_seconds||(option.value==='0'&&(!session||session.video.duration_s>runtime.max_analysis_seconds));if(duration.selectedOptions[0]?.disabled)duration.value='30';}
+
  const names=['左上','右上','右下','左下'];
  $('point-count').textContent=`${points.length} / 4`;
  $('point-list').innerHTML=names.map((n,i)=>`<div class="point ${points[i]?'filled':''}"><b>${i+1}</b>${t(n)}<em>${points[i]?`${Math.round(points[i][0])}, ${Math.round(points[i][1])}`:t('待选择')}</em></div>`).join('');
@@ -318,15 +323,35 @@ $('city-import').onclick=openVenueImport;
 ['import-button','rail-import','empty-import'].forEach(id=>$(id).onclick=openImport);
 $('close-dialog').onclick=()=>$('import-dialog').close();
 $('video-file').onchange=()=>$('file-label').textContent=$('video-file').files[0]?.name||t('选择比赛或训练录像');
-$('upload-form').onsubmit=e=>{
- e.preventDefault();const form=e.currentTarget,button=$('upload-submit'),data=new FormData(form);button.disabled=true;
+let uploadController=null;
+function uploadMessage(key,values){$('upload-message').hidden=false;$('upload-message').textContent=t(key,values);}
+$('pause-upload').onclick=()=>uploadController?.abort();
+$('import-dialog').addEventListener('close',()=>uploadController?.abort());
+function localUpload(data,signal){return new Promise((resolve,reject)=>{
  const xhr=new XMLHttpRequest();xhr.open('POST','/api/sessions');
- xhr.upload.onprogress=e=>{if(e.lengthComputable){$('upload-message').hidden=false;$('upload-message').textContent=t('正在导入到本机：{percent}%',{percent:Math.round(e.loaded/e.total*100)});}};
- xhr.onerror=()=>{button.disabled=false;$('upload-message').hidden=false;$('upload-message').textContent=t('导入失败，请确认本地服务正在运行。');};
- xhr.onload=async()=>{button.disabled=false;let data;try{data=JSON.parse(xhr.responseText);}catch{$('upload-message').hidden=false;$('upload-message').textContent=t('服务器响应无效。');return;}
-  if(xhr.status>=400){$('upload-message').hidden=false;$('upload-message').textContent=t(data.detail||'导入失败');return;}
-  $('import-dialog').close();form.reset();$('file-label').textContent=t('选择比赛或训练录像');$('upload-message').textContent='';$('upload-message').hidden=true;await refreshList();await choose(data.id);toast('视频已导入，请标定球场四角');
- };xhr.send(data);
+ const abort=()=>xhr.abort();signal.addEventListener('abort',abort,{once:true});
+ xhr.upload.onprogress=e=>{if(e.lengthComputable)uploadMessage('正在导入到本机：{percent}%',{percent:Math.round(e.loaded/e.total*100)});};
+ xhr.onerror=()=>reject(new Error(t('导入失败，请确认本地服务正在运行。')));
+ xhr.onabort=()=>reject(new DOMException('Aborted','AbortError'));
+ xhr.onload=()=>{let result;try{result=JSON.parse(xhr.responseText);}catch{reject(new Error(t('服务器响应无效。')));return;}
+  if(xhr.status>=400)reject(new Error(typeof result.detail==='string'?result.detail:t('导入失败')));else resolve(result);
+ };xhr.onloadend=()=>signal.removeEventListener('abort',abort);xhr.send(data);
+});}
+$('upload-form').onsubmit=async e=>{
+ e.preventDefault();const form=e.currentTarget,button=$('upload-submit'),data=new FormData(form);
+ button.disabled=true;uploadController=new AbortController();$('pause-upload').hidden=false;
+ try{
+  let imported;
+  if(runtime?.deployment==='cloud'){
+   const fields=Object.fromEntries([...data.entries()].filter(([key])=>key!=='video'));
+   imported=await window.CourtIQUpload.upload(data.get('video'),fields,{signal:uploadController.signal,
+    onProgress:(loaded,total)=>uploadMessage('正在上传：{percent}%',{percent:Math.round(loaded/total*100)}),
+    onState:state=>uploadMessage(state==='fingerprinting'?'正在核验视频':state==='processing'?'视频已上传，正在生成预览':'正在连接私有录像库')});
+  }else imported=await localUpload(data,uploadController.signal);
+  uploadController=null;$('import-dialog').close();form.reset();$('file-label').textContent=t('选择比赛或训练录像');$('upload-message').textContent='';$('upload-message').hidden=true;
+  await refreshList();await choose(imported.id);toast('视频已导入，请标定球场四角');
+ }catch(e){uploadMessage(e.name==='AbortError'?(runtime?.deployment==='cloud'?'上传已暂停，重新选择同一文件可继续':'导入已取消'):e.message);}
+ finally{button.disabled=false;uploadController=null;$('pause-upload').hidden=true;}
 };
 $('example-button').onclick=async()=>{const b=$('example-button');b.disabled=true;try{const s=await api('/api/example',{method:'POST'});await refreshList();await choose(s.id);toast('已载入上游真实样本，请确认球场标定');}catch(e){error(e.message);}finally{b.disabled=false;}};
 async function loadLog(){if(!session)return;const data=await api(`/api/sessions/${session.id}/log`);$('log-text').textContent=t(data.text);}
@@ -334,7 +359,7 @@ async function loadLog(){if(!session)return;const data=await api(`/api/sessions/
 function renderVideoDetails(){
  if(!session)return;
  const s=session;
- const details=[['训练名称',sessionTitle(s)],['来源',t(s.is_example?'上游公开样本':'本地训练记录')],['文件',s.original_filename],['场馆 / 场地',s.venue||'—'],['分辨率',`${s.video.width} × ${s.video.height}`],['帧率',`${s.video.fps.toFixed(1)} fps`],['原片时长',`${s.video.duration_s.toFixed(1)} s`]];
+ const details=[['训练名称',sessionTitle(s)],['来源',t(s.is_example?'上游公开样本':runtime?.deployment==='cloud'?'私有训练记录':'本地训练记录')],['文件',s.original_filename],['场馆 / 场地',s.venue||'—'],['分辨率',`${s.video.width} × ${s.video.height}`],['帧率',`${s.video.fps.toFixed(1)} fps`],['原片时长',`${s.video.duration_s.toFixed(1)} s`]];
  if(result)details.push(['分析片段',`0 – ${result.analysis_duration_s?.toFixed(1)||s.options.seconds} s`]);
  $('video-details-list').innerHTML=details.map(([key,value])=>`<div><dt>${t(key)}</dt><dd>${escapeHTML(value)}</dd></div>`).join('')+(s.is_example?`<div class="source-detail"><dt>${t('公开示例')}</dt><dd>${t('上游公开样本，非学生视频')}<a class="text-link" href="https://github.com/ychenfen/badminton-pipeline-repro" target="_blank" rel="noreferrer">badminton-pipeline-repro ↗</a></dd></div>`:'');
 }
@@ -343,12 +368,25 @@ $('close-details').onclick=()=>$('details-dialog').close();
 function renderSystem(){
  if(!runtime)return;
  const row=(name,ok)=>`<div class="dependency-row"><span>${escapeHTML(name)}</span><span class="${ok?'ok':'missing'}">${t(ok?'已就绪':'未就绪')}</span></div>`;
- $('system-content').innerHTML=`<section><h2>${t('运行环境')}<span class="muted">Python ${escapeHTML(runtime.python)}</span></h2>${Object.entries(runtime.packages).map(([k,v])=>row(k,v)).join('')}${row('FFmpeg',runtime.ffmpeg)}</section><section><h2>${t('预训练模型')}</h2>${Object.entries(runtime.weights).map(([k,v])=>row(k,v)).join('')}</section><section><h2>${t('开源来源')}</h2>${runtime.sources.map(s=>`<a class="source-link" href="${s.url}" target="_blank" rel="noreferrer">${s.name} ↗</a>`).join('')}<details class="method-details"><summary>${t('集成说明')}</summary><p class="helper">${t('主系统增加真实球员轨迹 CSV 导出；统计模块适配第二个项目的区域、凸包与位置分布方法。原始代码与许可保存在 vendor，变更及方法见 THIRD_PARTY.md。')}</p></details></section>`;
+ $('system-content').innerHTML=`<section><h2>${t(runtime.deployment==='cloud'?'云端分析环境':'运行环境')}<span class="muted">Python ${escapeHTML(runtime.python)}</span></h2>${Object.entries(runtime.packages).map(([k,v])=>row(k,v)).join('')}${row('FFmpeg',runtime.ffmpeg)}</section><section><h2>${t('预训练模型')}</h2>${Object.entries(runtime.weights).map(([k,v])=>row(k,v)).join('')}</section><section><h2>${t('开源来源')}</h2>${runtime.sources.map(s=>`<a class="source-link" href="${s.url}" target="_blank" rel="noreferrer">${s.name} ↗</a>`).join('')}<details class="method-details"><summary>${t('集成说明')}</summary><p class="helper">${t('主系统增加真实球员轨迹 CSV 导出；统计模块适配第二个项目的区域、凸包与位置分布方法。原始代码与许可保存在 vendor，变更及方法见 THIRD_PARTY.md。')}</p></details></section>`;
 }
+async function refreshRuntime(){
+ runtime=await api('/api/status');translateStatic();
+ $('runtime-pill').textContent=t(runtime.ready?'模型与环境就绪':'环境需要处理');$('runtime-pill').classList.toggle('ready',runtime.ready);
+ const cloud=runtime.deployment==='cloud';$('account-menu').hidden=!cloud;
+ if(cloud){$('account-email').textContent=runtime.user.email;$('account-email').title=runtime.user.email;}
+ if(runtime.max_analysis_seconds){
+  const select=$('duration');
+  if(select)Array.from(select.options).forEach(option=>{option.disabled=Number(option.value)>runtime.max_analysis_seconds;});
+ }
+ $('example-button').disabled=cloud&&!runtime.example_available;
+ renderSystem();renderPoints();
+}
+$('refresh-runtime').onclick=async()=>{const b=$('refresh-runtime');b.disabled=true;try{await refreshRuntime();}catch(e){error(e.message);}finally{b.disabled=false;}};
 async function boot(){
  const initialPage=location.hash.slice(1);
  translateStatic();
- try{runtime=await api('/api/status');$('runtime-pill').textContent=t(runtime.ready?'模型与环境就绪':'环境需要处理');$('runtime-pill').classList.toggle('ready',runtime.ready);await refreshList();renderSession();if(sessions.length)await choose(sessions[0].id);if(initialPage)setPage(initialPage);}catch(e){error(t('本地服务暂不可用：')+t(e.message));}
+ try{await refreshRuntime();await refreshList();renderSession();if(sessions.length)await choose(sessions[0].id);if(initialPage)setPage(initialPage);}catch(e){error(t('服务暂不可用：')+t(e.message));}
 }
 setInterval(async()=>{
  if(!session||!busy())return;

@@ -21,3 +21,12 @@ vendor/**/.git/
 *.mkv
 *.webm
 /*.png
+
+# Cloudflare local state and credentials
+node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+wrangler.local.jsonc
+.superpowers/

@@ -1,0 +1,110 @@
+# CourtIQ · Cloudflare 部署
+
+[English](CLOUD_DEPLOY.md) · [项目说明](README.zh-CN.md)
+
+此版本保留 `python app.py` 本地工作站，并增加完整云端入口。仅把 `static/` 放到 Pages 无法运行视频分析。云端使用 Workers 静态资源、Access 登录、私有 R2、D1、Queues 和运行 Python 的 Containers。
+
+## 已实现的运行方式
+
+- Access JWT 验签后按用户 `sub` 隔离训练档案；R2 不开放公共访问。
+- 浏览器按 8 MiB 上传原片，暂停后重新选择同一文件可续传。已存在的每片也会核验 SHA-256。最终原片哈希由 Python 重算。
+- Queues 只携带任务编号。一个 D1 推理槽串行运行任务，另一个容器提供预览、统计等操作；队列最多接受 20 个待处理记录。运行时使用 CPU。
+- 分析任务每约 30 秒检查一次，等待任务约 60 秒检查一次；每两分钟的 watchdog 补发遗漏任务。网页关闭不影响执行。
+- 容器重启后从 R2 原片重新分析，最多启动三次。所有结果按 8 MiB 分片保存，最后写 `completion.json`；之后才将 D1 标记为完成。已提交的结果可在新进程中恢复。
+- 中英文界面、四角标定、视频回放、CSV/JSON/图表导出、统计研究和城市体育规划页面沿用现有计算。
+
+默认上传上限 4 GiB、每次最多分析前 300 秒、从入队开始的任务时限两小时。建议先用 5 秒实拍片段评测 CPU 耗时和成本，再调整 `MAX_ANALYSIS_SECONDS` / `MAX_JOB_SECONDS`（任务时限最多 7,200 秒）。这些限制不等于实时处理性能承诺。统计模块与本地版共用 `services.py` / `research.py`。
+
+## 1. 准备账号与运行环境
+
+需要 Cloudflare 账号、Workers Paid 与 Containers 可用权限、Cloudflare 管理的自定义域名、Node.js 22+、Python 3.13 和运行中的 Docker。Containers 按实际运行另行计费；配置默认最多两个 `standard-4` 实例，并不表示两个实例一直运行。参见 [官方价格](https://developers.cloudflare.com/containers/platform/pricing/)。本次代码改造不会自动开通付费服务。
+
+在 CourtIQ 项目目录执行：
+
+```sh
+npm ci
+npm test
+.venv/bin/python -m unittest discover -s tests -q
+npm run cloud:check
+npx wrangler login
+npx wrangler d1 create courtiq
+npx wrangler r2 bucket create courtiq-private
+npx wrangler queues create courtiq-analysis
+```
+
+记录 D1 返回的 `database_id`。这套登录属于 Cloudflare，和本机原有 GitHub 账号、SSH 密钥没有关联。上游权重必须按 README 下载到原来的 `vendor/.../weights/`，不提交进 Git。
+
+## 2. 配置登录和容器回调
+
+在 Zero Trust → Access controls → Applications 创建自托管应用，域名为准备使用的 CourtIQ 自定义域名，登录策略只允许指定学生/教练的邮箱，按需要启用邮箱验证码或现有身份源。复制应用的 AUD tag 和团队域名 `https://你的团队.cloudflareaccess.com`。
+
+**另外创建同域名、更具体路径 `/internal/storage/*` 的 Access 应用，策略为 Bypass → Everyone。** 这是容器访问存储网关所需的通道；Worker 仍强制核验短期 HS256 capability，并限制用户、训练记录、运行编号、文件名与操作。该路径没有合法 capability 会返回 401；不要绕过整个站点或 `/api/*`。保留整个主应用的登录保护。
+
+私有 R2 桶不要启用 `r2.dev`、公共自定义域名或公共访问策略。浏览器只访问同源 Worker，无需为 R2 开放 CORS。
+
+## 3. 生成实际部署配置
+
+把下面参数替换成账号里的真实值：
+
+```sh
+npm run cloud:configure -- \
+  --origin https://你的域名 \
+  --team-domain https://你的团队.cloudflareaccess.com \
+  --aud 你的Access应用AUD \
+  --db-id 你的D1数据库UUID
+```
+
+生成的 `wrangler.local.jsonc` 已被 Git 忽略。它设置自定义域名路由；`workers.dev` 和预览链接默认关闭。配置模板中空白值是尚未提供的账号信息，不能直接部署为可用站点。
+
+```sh
+npx wrangler d1 migrations apply courtiq --remote --config wrangler.local.jsonc
+npx wrangler secret put INTERNAL_SECRET --config wrangler.local.jsonc
+```
+
+在终端秘密输入至少 32 字符的随机值；可先用 `openssl rand -hex 32` 生成。不要放入 Git、截图或聊天记录。Worker 将该值通过容器环境传给私有服务。
+
+```sh
+npm run cloud:seed
+npm run cloud:seed -- --remote
+npx wrangler r2 bucket lifecycle add courtiq-private courtiq-incomplete sessions/ --abort-multipart-days 1 --force
+```
+
+第一条只验证已有模型的固定哈希、不上传；第二条才上传两个真实模型。需要公开来源的流程验证视频时，额外执行 `npm run cloud:seed -- --remote --example`。这只增加私有账号内的真实上游样本，不会公开学生录像。超过一天的未完成分片由生命周期规则清理，未完成导入由 watchdog 清理。
+
+## 4. 构建和部署
+
+```sh
+docker build --platform linux/amd64 -t courtiq .
+npm run cloud:check -- --configured
+npm run cloud:deploy
+```
+
+第一次构建会安装 Linux CPU 版 PyTorch 与 FFmpeg，下载量较大。镜像不含原片或权重；运行任务时按 capability 从 R2 获取，并核对固定模型哈希。两个实例最多支持一个推理任务和一个统计/预览服务，其他任务等待，不会无限扩容。
+
+## 5. 上线验收
+
+1. 未登录访问主域名应进入 Access 登录；未携带 capability 访问 `/internal/storage/source.mp4` 应返回 401。
+2. 使用允许的邮箱登录，在“系统与来源”刷新运行状态，检查真实依赖与模型就绪。
+3. 上传一段自己有权使用的录像，暂停、再次选择同一文件，确认续传与预览；切换中英文。
+4. 保存球场标定，先分析前 5 秒，关闭网页后重新打开，检查任务继续运行。
+5. 完成后播放分析视频、拖动进度、导出 CSV/JSON/图表，进入统计研究，保存人工观察记录。
+6. 使用第二个允许的账号登录，确认无法看到第一个账号的档案或访问其文件链接。
+7. 在测试任务中重启容器，确认未提交任务可重试、已提交结果仍可恢复。检查 Cloudflare 日志与实际 CPU/存储账单。
+
+本机额外集成验证：
+
+```sh
+npm run test:integration
+# 同时验证真实羽毛球轨迹模型：
+COURTIQ_TEST_SHUTTLE=1 npm run test:integration
+```
+
+该命令使用临时 D1/R2、真实 Python 子进程与真实现有模型，验证续传、标定、推理、结果保存、进程重启恢复、统计与字节范围播放；不修改本地训练库。需要 README 中的模型及真实上游样本。
+
+## 验证边界与维护
+
+- Worker 编译、本地 D1/R2 集成与 Python 回归可以在没有 Cloudflare 账号时验证。真实 Linux 镜像、Access 策略、Containers 配额与生产性能必须在具备 Docker 和实际账号后验收；不能把本地通过写成已经上线。
+- 登录信息不是匿名作品集链接。申请展示可录制系统操作，或在明确获得影像授权后另做公开展示；当前实现不会自动发布私人录像。
+- 本地 `data/` 不会自动迁移到云端，也不会与云端双向同步；可重新导入原片。D1 元数据与 R2 文件共同构成训练档案，备份时需同时保留。
+- 更新数据库时新增迁移文件，勿改已在生产应用过的迁移；当前 `0001.sql` 用于首次上线。
+- 若遇到 403/登录 HTML 导致下载失败，先核查具体的内部路径 Bypass 应用与 `PUBLIC_ORIGIN`；不要关闭主应用的认证。模型校验失败时重新上传正确文件。队列中断时 watchdog 会补发，超时与重启超过上限会显示失败，不会生成虚构结果。

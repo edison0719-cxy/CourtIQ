@@ -52,5 +52,29 @@
     "height": 720,
     "fps": 30,
     "duration_s": 5.0
+  },
+  "videos": {
+    "original": {
+      "file": "original.mp4",
+      "poster": "original-poster.jpg",
+      "sha256": "9fc16cad2c812ee6255d9447a88da5de0caed90e68d41c50809a18487a334f2d",
+      "poster_sha256": "ad2ffef855e3b4b90d02a9e75f7eb1866cc02a850007aa7ca29b83641c764de8",
+      "source_sha256": "9fc16cad2c812ee6255d9447a88da5de0caed90e68d41c50809a18487a334f2d",
+      "run_id": "299705b4e6534031b86ee0d50080a9a4",
+      "duration_s": 30.0,
+      "width": 960,
+      "height": 544
+    },
+    "analysis": {
+      "file": "analysis.mp4",
+      "poster": "analysis-poster.jpg",
+      "sha256": "9faaee45d5fde69d2b3425d355fe41feb92c5325772d56ea0cd0084a17e13a09",
+      "poster_sha256": "b9a4802353845e11da16eb1a1affa01aca6168b39fbf3191ba693f51d754ba4e",
+      "source_sha256": "9fc16cad2c812ee6255d9447a88da5de0caed90e68d41c50809a18487a334f2d",
+      "run_id": "299705b4e6534031b86ee0d50080a9a4",
+      "duration_s": 5.0,
+      "width": 960,
+      "height": 544
+    }
   }
 }

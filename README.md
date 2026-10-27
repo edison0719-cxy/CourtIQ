@@ -12,7 +12,7 @@ npm run build:site
 npm run site:dev
 ```
 
-The site displays the real, precomputed five-second upstream example included in `published/`: a downloadable H.264 animation, interactive trajectory replay, heatmaps, spatial statistics, time-block bootstrap intervals, calibration and threshold sensitivity, and CSV/JSON/chart exports. The example is labeled and excluded from venue pilot counts. No student recordings or student performance claims are included. No original video or broadcast frames are published.
+The site displays the real, precomputed five-second upstream example included in `published/`: a downloadable H.264 animation, interactive trajectory replay, heatmaps, spatial statistics, time-block bootstrap intervals, calibration and threshold sensitivity, and CSV/JSON/chart exports. The example is labeled and excluded from venue pilot counts. No student recordings or student performance claims are included. The explicitly approved upstream example includes its 30-second original clip and a 5-second tracking overlay; statistics cover only the first five seconds.
 
 Connect this repository to Cloudflare Workers Builds: branch `main`, root `/`, build command `npm ci --include=dev`, deploy command `npm run cloud:deploy:git`. The target is an assets-only Worker using `wrangler.site.jsonc`. No `COURTIQ_*` variables, Access signup, R2, D1, Queues, Containers or paid Workers plan are required by this configuration. Existing cloud secrets are never read or bundled by the static build. See the [deployment guide](CLOUD_DEPLOY.md).
 
@@ -23,7 +23,7 @@ To publish a completed local run after reviewing publication rights and public m
 npm run build:site
 ```
 
-Replace `SESSION_ID` with the actual completed record ID. Commit the resulting `published/` files and push `main`. The exporter uses anonymous near/far player labels and excludes original videos, original filenames, frame images, private names, coach notes, manual assessments, logs and weights. `--animation` renders a 720p H.264 court animation and poster locally from actual observed positions; it includes no source footage. Omit that flag for data-only publication. Every exported metric and animation remains tied to its actual run and trajectory hash; animation files are also hashed. Publication makes the derived coordinates and statistics public; review them before committing. Local analysis and statistical export need the Python dependencies below; Cloudflare only packages the already-published files using Node.js.
+Replace `SESSION_ID` with the actual completed record ID. Commit the resulting `published/` files and push `main`. The default export uses anonymous near/far player labels and excludes original videos, original filenames, private names, coach notes, manual assessments, logs and weights. Add `--videos` only after reviewing publication rights to explicitly include the original and completed overlay MP4s, plus their posters. `--animation` renders a 720p H.264 court animation and poster locally from actual observed positions; it includes no source footage. Omit that flag for data-only publication. Every exported metric and animation remains tied to its actual run and trajectory hash; animation files are also hashed. Publication makes the derived coordinates and statistics public; review them before committing. Local analysis and statistical export need the Python dependencies below; Cloudflare only packages the already-published files using Node.js.
 
 ## Start the local analysis workbench
 
@@ -47,7 +47,7 @@ You can also start the service from the project directory:
 4. Review the original or analyzed video, near/far player heatmaps, trajectories, convex hulls, zone occupancy, zone transitions, speed profiles, and observation quality.
 5. Export trajectory CSV, charts, and the analysis video. Download run parameters and methods from **Quality & methods**, and save manual observations under **Coach notes**.
 
-**Demo video** creates a clearly labeled record from the upstream public match sample. It is neither student footage nor simulated tracking data. Check its calibration before running it. A five-second segment was used for local end-to-end validation; the source footage remains local; reviewed derived results from that run are included in `published/` for the static showcase.
+**Demo video** creates a clearly labeled record from the upstream public match sample. It is neither student footage nor simulated tracking data. Check its calibration before running it. A five-second segment was used for local end-to-end validation; the explicitly approved original clip, overlay and derived results are included in `published/` for the showcase.
 
 Reference corners for that specific upstream sample are `(352,342), (628,343), (944,527), (52,532)`. They do not apply to other recordings.
 

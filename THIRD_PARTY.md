@@ -7,7 +7,7 @@
 - 上游 README 声明代码部分 MIT，权重及视频按原始来源条款使用；上游未提供单独 LICENSE 文件。原始 README 与源码保留在 vendor；来源版本记录于 UPSTREAM_VERSIONS.json，原上游 Git 历史备份在本机 .upstream-git/（不随源码提交）。
 - 模型引用：TrackNetV3 (qaz812345/TrackNetV3)、Ultralytics YOLO、ByteTrack。Ultralytics 有其自身许可要求，不因本整合而改变。
 - 比赛样本来源：上游 README 标注 POGBADMINTON；仅作为明确标识的本地流程验证素材。申请作品使用学生自己的授权录像。
-- 静态展示仅分发该样本 5 秒实际推理得到的匿名轨迹、统计量、图表、由轨迹渲染的动画与参数指纹；不分发转播视频、原始截图或人物图像。`published/` 中的示例始终保留 `is_example: true`，不作为学生视频、场馆试点或训练提升证据。学生结果发布前另行审核授权和公开范围。
+- 静态展示包含该样本 5 秒实际推理得到的匿名轨迹、统计量、图表、轨迹动画与参数指纹。用户已明确确认有权公开并同意发布该 30 秒样例原片及 5 秒分析叠加视频，页面保留来源与时长范围；该确认针对本次样例，不表示所有上游素材均可任意再分发。`published/` 中的示例始终保留 `is_example: true`，不作为学生视频、场馆试点或训练提升证据。学生结果发布前另行审核授权和公开范围。
 
 主系统改动仅在 `scripts/overlay/overlay_player_analytics.py`：
 

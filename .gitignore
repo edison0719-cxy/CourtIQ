@@ -16,6 +16,8 @@ vendor/**/.git/
 *.onnx
 *.mp4
 !published/*/trajectory.mp4
+!published/*/original.mp4
+!published/*/analysis.mp4
 *.mov
 *.m4v
 *.avi

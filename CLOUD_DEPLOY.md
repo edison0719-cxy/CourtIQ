@@ -26,7 +26,7 @@ npm run build:site
 npm run site:dev
 ```
 
-`dist/` is generated, not committed. The build never reads local credentials, recordings or models. `published/` currently contains only the clearly labeled, genuine five-second upstream example. It makes no student performance claims. Follow the README's explicit `publish.py` command to export reviewed local results; push the generated publication files to update the site. Original footage stays local. Cohort editing and manual outcome entry remain in the local workstation.
+`dist/` is generated, not committed. The build never reads local credentials, recordings or models. `published/` contains the clearly labeled upstream example: its explicitly approved 30-second original, a five-second overlay, animation and statistics. It makes no student performance claims. Follow the README's explicit `publish.py` command to export reviewed local results; push the generated publication files to update the site. Original footage is excluded by default; `--videos` explicitly includes reviewed match MP4s. Cohort editing and manual outcome entry remain in the local workstation.
 
 ---
 

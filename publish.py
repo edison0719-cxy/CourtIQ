@@ -1,10 +1,11 @@
-"""Explicitly export one completed local run as public, data-only research artifacts."""
+"""Export one completed run, with separately selected animation and reviewed match videos."""
 import argparse
 import copy
 import json
 import re
 import shutil
 import tempfile
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -81,7 +82,32 @@ def export_session(folder, destination, title, venue):
     return public
 
 
-def publish_record(source, destination, title, venue, animation=False):
+def export_match_videos(source, target, public):
+    from services import file_sha256
+    source_metadata = json.loads((source / 'session.json').read_text())
+    original = source / source_metadata.get('source_file', 'source.mp4')
+    source_hash = file_sha256(original)
+    videos = {}
+    for kind, file in [('original', original), ('analysis', source / 'runs' / public['run_id'] / 'analysis.mp4')]:
+        if file.stat().st_size > 25 * 1024 * 1024:
+            raise ValueError('Match video exceeds 25 MiB. Publish a shorter reviewed clip.')
+        info = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                                                  '-show_streams', '-show_format', '-of', 'json', str(file)]))
+        stream = info['streams'][0]
+        if stream['codec_name'] != 'h264' or stream['pix_fmt'] != 'yuv420p':
+            raise ValueError('Publish browser-compatible H.264 / yuv420p match videos.')
+        output, poster = target / f'{kind}.mp4', target / f'{kind}-poster.jpg'
+        shutil.copyfile(file, output)
+        subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', str(output), '-frames:v', '1',
+                        '-update', '1', str(poster)], check=True)
+        videos[kind] = {'file': output.name, 'poster': poster.name, 'sha256': file_sha256(output),
+                        'poster_sha256': file_sha256(poster), 'source_sha256': source_hash,
+                        'run_id': public['run_id'], 'duration_s': float(info['format']['duration']),
+                        'width': stream['width'], 'height': stream['height']}
+    return videos
+
+
+def publish_record(source, destination, title, venue, animation=False, videos=False):
     destination.mkdir(parents=True, exist_ok=True)
     catalog_file = destination / 'catalog.json'
     catalog = json.loads(catalog_file.read_text()) if catalog_file.exists() else {'schema_version': 1, 'sessions': []}
@@ -93,7 +119,9 @@ def publish_record(source, destination, title, venue, animation=False):
         if animation:
             from render_animation import render_animation
             public['animation'] = render_animation(folder, folder)
-            write_json(folder / 'session.json', public)
+        if videos:
+            public['videos'] = export_match_videos(source, folder, public)
+        write_json(folder / 'session.json', public)
         catalog['sessions'] = [public] + [s for s in catalog['sessions'] if s['id'] != public['id']]
         catalog['published_at'] = datetime.now(timezone.utc).isoformat()
         write_json(staging / 'catalog.json', catalog)
@@ -119,14 +147,15 @@ def main():
     parser.add_argument('--venue', default='', help='Optional public venue label')
     parser.add_argument('--confirm-public', action='store_true', help='Acknowledge that results will be public')
     parser.add_argument('--animation', action='store_true', help='Render a court animation from observed trajectories locally')
+    parser.add_argument('--videos', action='store_true', help='Include reviewed original and completed analysis MP4s')
     args = parser.parse_args()
     if not args.confirm_public:
         parser.error('Results become public; review rights and metadata, then pass --confirm-public.')
     if not re.fullmatch(r'[a-f0-9]{32}', args.session_id):
         parser.error('Invalid session ID.')
     destination = ROOT / 'published'
-    public = publish_record(ROOT / 'data' / 'sessions' / args.session_id, destination, args.title, args.venue, args.animation)
-    print(f'Published data for {public["id"]}. Original video and private metadata excluded.')
+    public = publish_record(ROOT / 'data' / 'sessions' / args.session_id, destination, args.title, args.venue, args.animation, args.videos)
+    print(f'Published {public["id"]}, reviewed match videos: {bool(args.videos)}. Private notes and model files excluded.')
 
 
 if __name__ == '__main__':

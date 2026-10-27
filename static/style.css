@@ -21,7 +21,7 @@ html[data-mode="showcase"] .workflow,
 html[data-mode="showcase"] [data-tab="notes"] {display:none!important}
 html[data-mode="showcase"] #video-stage {background:#effaf5;aspect-ratio:auto;display:block}
 html[data-mode="showcase"] #match-video {position:relative;display:block;aspect-ratio:16/9;height:auto;width:100%;background:#f1f8fc}
-#published-video-tabs {margin-left:auto}
+#published-video-tabs {margin-left:auto;flex-wrap:wrap;gap:4px}
 html[data-mode="showcase"] .video-panel .panel-bar {flex-wrap:wrap;gap:12px}
 html[data-mode="showcase"] .runtime-pill {color:#087c69;background:#e6f7ef;border-color:#c4e9d9}
 html[data-mode="showcase"] .research-controls {grid-template-columns:minmax(180px,1fr) minmax(130px,.6fr) auto auto}

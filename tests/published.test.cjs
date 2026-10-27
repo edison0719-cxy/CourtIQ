@@ -52,6 +52,21 @@ test('the sample animation is a downloadable, provenance-linked published artifa
  assert.equal(session.animation.trajectory_sha256,manifest.trajectory_sha256);
 });
 
+test('the actual original clip and analyzed overlay retain their distinct durations and source identity',async()=>{
+ const data=reader(),session=(await data.list()).find(s=>s.is_example);
+ assert.ok(session.videos?.original,'Publish the real original video');
+ assert.ok(session.videos?.analysis,'Publish the completed overlay');
+ const manifest=await data.manifest(session.id);
+ assert.equal(session.videos.original.duration_s,30);
+ assert.equal(session.videos.analysis.duration_s,5);
+ assert.equal(session.videos.original.sha256,manifest.source_sha256);
+ for(const [kind,video] of Object.entries(session.videos)){
+  assert.equal(video.run_id,session.run_id);
+  assert.equal(video.source_sha256,manifest.source_sha256);
+  assert.equal(data.file(session.id,video.file),`/results/${session.id}/${kind}.mp4`);
+ }
+});
+
 test('static build publishes data only and rejects private/stale files',async()=>{
  const {buildSite}=await import('../build-site.mjs');
  const temp=await fs.mkdtemp(path.join(os.tmpdir(),'courtiq-publication-'));
@@ -77,6 +92,10 @@ test('static build publishes data only and rejects private/stale files',async()=
   const video=await fs.readFile(animation);await fs.appendFile(animation,'corruption');
   await assert.rejects(buildSite(temp),/Animation.*fingerprint/);
   await fs.writeFile(animation,video);
+  const originalVideo=path.join(temp,'published',session.id,'original.mp4');
+  const originalBytes=await fs.readFile(originalVideo);await fs.appendFile(originalVideo,'corruption');
+  await assert.rejects(buildSite(temp),/Match video asset fingerprint/);
+  await fs.writeFile(originalVideo,originalBytes);
   await fs.appendFile(path.join(temp,'published',session.id,'players.csv'),'\n');
   await assert.rejects(buildSite(temp),/provenance/);
  }finally{await fs.rm(temp,{recursive:true,force:true});}

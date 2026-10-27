@@ -10,7 +10,7 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
  const catalog=await readJSON(path.join(root,'published/catalog.json'));
  if(catalog.schema_version!==1||!catalog.sessions?.length)throw new Error('Publish at least one completed run before building.');
  const commonFiles=['session.json','summary.json','manifest.json','players.csv','analytics.png','preview.svg'];
- const filesFor=record=>[...commonFiles,...record.players.map(p=>`statistics-${p}.json`),...(record.animation?['trajectory.mp4','animation-poster.jpg']:[])];
+ const filesFor=record=>[...commonFiles,...record.players.map(p=>`statistics-${p}.json`),...(record.animation?['trajectory.mp4','animation-poster.jpg']:[]),...['original','analysis'].flatMap(kind=>record.videos?.[kind]?[`${kind}.mp4`,`${kind}-poster.jpg`]:[])];
  const seen=new Set();
  const names=await readdir(path.join(root,'published'));
  if(names.some(name=>name!=='catalog.json'&&!catalog.sessions.some(s=>s.id===name)))throw new Error('Unexpected file in public catalog.');
@@ -42,6 +42,16 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
     if(digest!==expected)throw new Error('Animation asset fingerprint does not match the publication.');
    }
   }
+  if(record.videos){
+   if(Object.keys(record.videos).some(kind=>!['original','analysis'].includes(kind)))throw new Error('Unknown published video kind.');
+   for(const [kind,video] of Object.entries(record.videos)){
+    if(video.file!==`${kind}.mp4`||video.poster!==`${kind}-poster.jpg`||video.run_id!==record.run_id||video.source_sha256!==manifest.source_sha256)throw new Error('Match video source fingerprint mismatch.');
+    if(kind==='original'&&video.sha256!==manifest.source_sha256)throw new Error('Original video differs from the analyzed source.');
+    for(const [name,expected] of [[video.file,video.sha256],[video.poster,video.poster_sha256]]){
+     if(createHash('sha256').update(await readFile(path.join(folder,name))).digest('hex')!==expected)throw new Error('Match video asset fingerprint mismatch.');
+    }
+   }
+  }
   const summary=await readJSON(path.join(folder,'summary.json'));
   if(Object.keys(summary.players).sort().join()!==[...record.players].sort().join())throw new Error('Published player list differs from the analysis.');
   for(const player of record.players){
@@ -64,7 +74,7 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
  }
  await writeFile(path.join(out,'_headers'),'/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  X-Frame-Options: DENY\n/results/*\n  Cache-Control: public, max-age=0, must-revalidate\n');
  for(const name of ['THIRD_PARTY.md','UPSTREAM_VERSIONS.json'])await cp(path.join(root,name),path.join(out,name));
- console.log(`Static CourtIQ: ${catalog.sessions.length} published run(s), ${catalog.sessions.filter(s=>s.animation).length} rendered animation(s); no API, source footage, models, secrets or database bindings.`);
+ console.log(`Static CourtIQ: ${catalog.sessions.length} published run(s), ${catalog.sessions.filter(s=>s.animation).length} animation(s), ${catalog.sessions.filter(s=>s.videos).length} reviewed match video set(s); no analysis API, models, secrets or database bindings.`);
  return out;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await buildSite();

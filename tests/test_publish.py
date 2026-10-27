@@ -7,12 +7,31 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from publish import public_session, export_session, publish_record
+from publish import public_session, export_session, publish_record, export_match_videos
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class PublicationTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'FFmpeg tools required')
+    def test_explicit_match_video_export_preserves_the_exact_original_and_overlay(self):
+        from services import file_sha256
+        session = next(s for s in json.loads((ROOT / 'published/catalog.json').read_text())['sessions'] if s['is_example'])
+        published = ROOT / 'published' / session['id']
+        with tempfile.TemporaryDirectory() as temp:
+            source, target = Path(temp) / 'source', Path(temp) / 'out'
+            run = source / 'runs' / session['run_id']
+            run.mkdir(parents=True); target.mkdir()
+            shutil.copyfile(published / 'session.json', source / 'session.json')
+            shutil.copyfile(published / 'original.mp4', source / 'source.mp4')
+            shutil.copyfile(published / 'analysis.mp4', run / 'analysis.mp4')
+            videos = export_match_videos(source, target, session)
+            self.assertEqual(videos['original']['duration_s'], 30.)
+            self.assertEqual(videos['analysis']['duration_s'], 5.)
+            for kind in ('original', 'analysis'):
+                self.assertEqual(file_sha256(target / f'{kind}.mp4'), file_sha256(published / f'{kind}.mp4'))
+                self.assertTrue((target / videos[kind]['poster']).is_file())
+
     def test_unavailable_encoder_keeps_the_previous_publication_intact(self):
         catalog = json.loads((ROOT / 'published/catalog.json').read_text())
         session = next(s for s in catalog['sessions'] if s['is_example'])

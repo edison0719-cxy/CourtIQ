@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 const showcase=document.documentElement.dataset.mode==='showcase';
 const published=showcase?window.CourtIQPublished.createReader(path=>fetch(path)):null;
-const publishedLabels={'分析视频':'动画下载','训练分析工作台':'运动数据实验室','训练工作台':'结果工作台','训练档案':'分析档案','最近训练':'已发布分析','本地工作空间':'公开研究展示','本地训练记录':'已发布训练','本地':'已发布','比赛录像':'轨迹复盘','视频详情':'数据来源','系统与来源':'方法与来源','刷新运行状态':'查看来源','计算统计':'查看统计','导入真实训练，建立比较组':'尚未发布训练比较','暂无场馆记录':'尚未发布场馆数据','还没有训练记录':'尚未发布分析结果','检查运行环境':'读取分析结果'};
+const publishedLabels={'训练分析工作台':'运动数据实验室','训练工作台':'结果工作台','训练档案':'分析档案','最近训练':'已发布分析','本地工作空间':'公开研究展示','本地训练记录':'已发布训练','本地':'已发布','视频详情':'数据来源','系统与来源':'方法与来源','刷新运行状态':'查看来源','计算统计':'查看统计','导入真实训练，建立比较组':'尚未发布训练比较','暂无场馆记录':'尚未发布场馆数据','还没有训练记录':'尚未发布分析结果','检查运行环境':'读取分析结果'};
 let language = 'zh';
 try { language = localStorage.getItem('courtiq.language') === 'en' ? 'en' : 'zh'; } catch {}
 const cloudLabels={'本地工作空间':'私有云工作空间','本地训练记录':'私有训练记录','本机训练档案':'私有训练档案','本机档案':'账号内档案','本地':'私有'};
@@ -174,13 +174,15 @@ function renderSession() {
 }
 function renderVideo() {
  if(showcase){
-  const video=$('match-video'),animation=session?.animation,showVideo=!!animation&&view!=='trajectory';
-  $('published-video-tabs').hidden=!animation;
+  const video=$('match-video'),sources={original:session?.videos?.original,analysis:session?.videos?.analysis,animation:session?.animation};
+  if(view!=='trajectory'&&!sources[view])view=Object.keys(sources).find(key=>sources[key])||'trajectory';
+  const media=sources[view],showVideo=!!media;
+  $('published-video-tabs').hidden=!Object.values(sources).some(Boolean);
   $('calibration-stage').hidden=true;video.hidden=!showVideo;$('trajectory-replay').hidden=!session||showVideo;
-  document.querySelectorAll('[data-published-view]').forEach(button=>{const active=button.dataset.publishedView===(showVideo?'animation':'trajectory');button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+  document.querySelectorAll('[data-published-view]').forEach(button=>{const key=button.dataset.publishedView,active=key===view;button.hidden=key!=='trajectory'&&!sources[key];button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
   if(showVideo){
-   video.poster=fileURL(animation.poster);
-   if(animationKey!==session.id+animation.sha256)loadPublishedAnimation(session);
+   video.poster=fileURL(media.poster);
+   if(animationKey!==session.id+media.sha256)loadPublishedVideo(session,media,replayTime);
   }else video.pause();
   requestAnimationFrame(drawReplay);return;
  }
@@ -202,25 +204,29 @@ function releaseAnimation(){
  const video=$('match-video');video.pause();video.removeAttribute('src');video.load();
  if(animationURL)URL.revokeObjectURL(animationURL);animationURL='';
 }
-async function loadPublishedAnimation(record){
+async function loadPublishedVideo(record,media,cursor){
  releaseAnimation();const token=animationRequest;
- animationKey=record.id+record.animation.sha256;animationController=new AbortController();
+ animationKey=record.id+media.sha256;animationController=new AbortController();
  try{
   // Short exported MP4s are loaded as a Blob so seeking also works on static hosts without Range support.
-  const response=await fetch(sessionFile(record.id,record.animation.file),{signal:animationController.signal});
-  if(!response.ok)throw new Error(t('动画暂不可用，请查看交互轨迹。'));
+  const response=await fetch(sessionFile(record.id,media.file),{signal:animationController.signal});
+  if(!response.ok)throw new Error(t('视频暂不可用，请查看交互轨迹。'));
   const blob=await response.blob();if(token!==animationRequest)return;
-  animationURL=URL.createObjectURL(blob);$('match-video').src=animationURL;$('match-video').load();
+  animationURL=URL.createObjectURL(blob);
+  const video=$('match-video');video.onloadedmetadata=()=>{if(token===animationRequest){video.currentTime=cursor<video.duration?cursor:0;if(!video.hidden)replayTime=video.currentTime;}};
+  video.src=animationURL;video.load();
  }catch(e){
   if(token!==animationRequest||e.name==='AbortError')return;
-  animationKey='';view='trajectory';renderVideo();error(t('动画暂不可用，请查看交互轨迹。'));
+  animationKey='';view='trajectory';renderVideo();renderResults();error(t('视频暂不可用，请查看交互轨迹。'));
  }finally{if(token===animationRequest)animationController=null;}
 }
 window.addEventListener('pagehide',event=>{if(showcase&&!event.persisted)releaseAnimation();});
 document.querySelectorAll('#video-tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.view;renderVideo();});
 document.querySelectorAll('[data-published-view]').forEach(button=>button.onclick=()=>{
- stopReplay();view=button.dataset.publishedView;renderVideo();
- if(view==='animation'&&Number.isFinite($('match-video').duration))$('match-video').currentTime=replayTime;
+ stopReplay();view=button.dataset.publishedView;
+ if(view==='trajectory')replayTime=Math.min(replayTime,result?.analysis_duration_s||0);
+ renderVideo();renderResults();
+ if(view!=='trajectory'&&Number.isFinite($('match-video').duration))$('match-video').currentTime=Math.min(replayTime,$('match-video').duration);
 });
 function renderPoints() {
  const cloud=runtime?.deployment==='cloud';
@@ -279,10 +285,12 @@ async function loadResults() {
 function renderResults() {
  $('setup-controls').hidden=!!result;$('court-results').hidden=!result;$('inspector-title').textContent=t(result?'球场空间分析':'分析设置');
  $('export-links').hidden=!result;
- $('export-video').hidden=!result||(showcase&&!session?.animation);
- if(result){$('export-csv').href=fileURL('players.csv');$('export-chart').href=fileURL('analytics.png');if(!showcase||session.animation)$('export-video').href=fileURL(showcase?session.animation.file:'analysis.mp4');}
+ const media=showcase?(view==='animation'?session?.animation:session?.videos?.[view]):null;
+ $('export-video').hidden=!result||(showcase&&!media);
+ if(result){$('export-csv').href=fileURL('players.csv');$('export-chart').href=fileURL('analytics.png');if(!showcase||media)$('export-video').href=fileURL(showcase?media.file:'analysis.mp4');}
+ $('export-video').querySelector('span').textContent=t(showcase?({original:'原片下载',analysis:'分析视频',animation:'动画下载'}[view]||'分析视频'):'分析视频');
  const p=playerData();
- if(result){$('video-description').textContent=`${sessionTitle(session)} · ${t('分析片段')} ${result.analysis_duration_s?.toFixed(1)||session.options.seconds} s`;}
+ if(result){$('video-description').textContent=showcase&&view==='original'?t('原片 {source} s · 统计前 {analysis} s',{source:session.video.duration_s.toFixed(1),analysis:result.analysis_duration_s.toFixed(1)}):`${sessionTitle(session)} · ${t('统计覆盖前 {seconds} 秒',{seconds:result.analysis_duration_s?.toFixed(1)||session.options.seconds})}`;}
  const metric=(id,value,unit='')=>$(id).innerHTML=value===undefined||value===null?'—':`${value}<small>${unit}</small>`;
  metric('metric-observation',p?(p.observation_rate*100).toFixed(1):null,'%');
  metric('metric-distance',p?p.distance_m.toFixed(1):null,'m');metric('metric-hull',p?p.hull_area_m2.toFixed(1):null,'m²');
@@ -324,7 +332,7 @@ function drawCourt() {
  if(position&&Math.abs(position[1]-currentTime)<.3){const [x,y]=xy(position[2],position[3]);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle='#2468eb';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
  $('map-label').textContent=t({heatmap:'观测位置频率',trajectory:'观测移动轨迹',hull:'观测位置包络'}[map]);
 }
-$('match-video').ontimeupdate=()=>{if(showcase)replayTime=$('match-video').currentTime;drawCourt();};
+$('match-video').ontimeupdate=()=>{if(showcase&&!$('match-video').hidden)replayTime=$('match-video').currentTime;drawCourt();};
 
 const descriptions={distribution:['半场区域分布','前 / 中 / 后场均以球员所在半场和球网为参照；左右沿画面方向。'],transitions:['区域转移概率','相邻有效视频帧的经验频率，包含原地停留；未观测到的转移显示为 0。'],speed:['移动速度曲线','仅计算连续检测位置；缺帧与超过 8 m/s 的跳点不连线。']};
 document.querySelectorAll('#analytics-tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderAnalytics();});

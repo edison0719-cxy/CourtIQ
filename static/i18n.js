@@ -1,5 +1,9 @@
 /* UI copy only. Training names, filenames and coach notes remain user content. */
 const english = Object.freeze({
+  '原片 {source} s · 统计前 {analysis} s':'Original {source} s · First {analysis} s analyzed',
+  '原片下载':'Download original',
+  '分析叠加':'Tracking overlay',
+  '视频暂不可用，请查看交互轨迹。':'Video unavailable. Explore the interactive trajectories instead.',
   '动画视频':'Animation',
   '交互轨迹':'Interactive trajectories',
   '动画下载':'Download animation',

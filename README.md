@@ -12,18 +12,18 @@ npm run build:site
 npm run site:dev
 ```
 
-The site displays the real, precomputed five-second upstream example included in `published/`: interactive trajectory replay, heatmaps, spatial statistics, time-block bootstrap intervals, calibration and threshold sensitivity, and CSV/JSON/chart exports. The example is labeled and excluded from venue pilot counts. No student recordings or student performance claims are included. No original video or broadcast frames are published.
+The site displays the real, precomputed five-second upstream example included in `published/`: a downloadable H.264 animation, interactive trajectory replay, heatmaps, spatial statistics, time-block bootstrap intervals, calibration and threshold sensitivity, and CSV/JSON/chart exports. The example is labeled and excluded from venue pilot counts. No student recordings or student performance claims are included. No original video or broadcast frames are published.
 
 Connect this repository to Cloudflare Workers Builds: branch `main`, root `/`, build command `npm ci --include=dev`, deploy command `npm run cloud:deploy:git`. The target is an assets-only Worker using `wrangler.site.jsonc`. No `COURTIQ_*` variables, Access signup, R2, D1, Queues, Containers or paid Workers plan are required by this configuration. Existing cloud secrets are never read or bundled by the static build. See the [deployment guide](CLOUD_DEPLOY.md).
 
 To publish a completed local run after reviewing publication rights and public metadata:
 
 ```sh
-.venv/bin/python publish.py SESSION_ID --title "Public training title" --venue "Public venue label" --confirm-public
+.venv/bin/python publish.py SESSION_ID --title "Public training title" --venue "Public venue label" --animation --confirm-public
 npm run build:site
 ```
 
-Replace `SESSION_ID` with the actual completed record ID. Commit the resulting `published/` files and push `main`. The exporter uses anonymous near/far player labels and excludes original videos, original filenames, frame images, private names, coach notes, manual assessments, logs and weights. Every exported metric remains tied to its actual run and trajectory hash. Publication makes the derived coordinates and statistics public; review them before committing. Local analysis and statistical export need the Python dependencies below; Cloudflare only packages the already-published files using Node.js.
+Replace `SESSION_ID` with the actual completed record ID. Commit the resulting `published/` files and push `main`. The exporter uses anonymous near/far player labels and excludes original videos, original filenames, frame images, private names, coach notes, manual assessments, logs and weights. `--animation` renders a 720p H.264 court animation and poster locally from actual observed positions; it includes no source footage. Omit that flag for data-only publication. Every exported metric and animation remains tied to its actual run and trajectory hash; animation files are also hashed. Publication makes the derived coordinates and statistics public; review them before committing. Local analysis and statistical export need the Python dependencies below; Cloudflare only packages the already-published files using Node.js.
 
 ## Start the local analysis workbench
 

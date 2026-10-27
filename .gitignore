@@ -15,6 +15,7 @@ vendor/**/.git/
 *.ckpt
 *.onnx
 *.mp4
+!published/*/trajectory.mp4
 *.mov
 *.m4v
 *.avi

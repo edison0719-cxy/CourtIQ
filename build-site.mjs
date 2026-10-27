@@ -10,6 +10,7 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
  const catalog=await readJSON(path.join(root,'published/catalog.json'));
  if(catalog.schema_version!==1||!catalog.sessions?.length)throw new Error('Publish at least one completed run before building.');
  const commonFiles=['session.json','summary.json','manifest.json','players.csv','analytics.png','preview.svg'];
+ const filesFor=record=>[...commonFiles,...record.players.map(p=>`statistics-${p}.json`),...(record.animation?['trajectory.mp4','animation-poster.jpg']:[])];
  const seen=new Set();
  const names=await readdir(path.join(root,'published'));
  if(names.some(name=>name!=='catalog.json'&&!catalog.sessions.some(s=>s.id===name)))throw new Error('Unexpected file in public catalog.');
@@ -19,7 +20,7 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
   seen.add(record.id);
   const folder=path.join(root,'published',record.id);
   if(!record.players?.length||new Set(record.players).size!==record.players.length||record.players.some(p=>!['near','far'].includes(p)))throw new Error('Invalid published player list.');
-  const files=[...commonFiles,...record.players.map(p=>`statistics-${p}.json`)];
+  const files=filesFor(record);
   if(!(await lstat(folder)).isDirectory())throw new Error('Publication directory must not be a symlink.');
   const names=await readdir(folder);
   if(names.some(name=>!files.includes(name))||files.some(name=>!names.includes(name)))throw new Error('Publication must contain only the explicit data-only file allowlist.');
@@ -33,6 +34,14 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
   const manifest=await readJSON(path.join(folder,'manifest.json'));
   const csvHash=createHash('sha256').update(await readFile(path.join(folder,'players.csv'))).digest('hex');
   if(manifest.trajectory_sha256!==csvHash||manifest.run_id!==record.run_id)throw new Error('Published trajectory or run does not match its provenance.');
+  if(record.animation){
+   const animation=record.animation;
+   if(animation.file!=='trajectory.mp4'||animation.poster!=='animation-poster.jpg'||animation.run_id!==record.run_id||animation.trajectory_sha256!==csvHash)throw new Error('Animation source fingerprint does not match its published run.');
+   for(const [name,expected] of [[animation.file,animation.sha256],[animation.poster,animation.poster_sha256]]){
+    const digest=createHash('sha256').update(await readFile(path.join(folder,name))).digest('hex');
+    if(digest!==expected)throw new Error('Animation asset fingerprint does not match the publication.');
+   }
+  }
   const summary=await readJSON(path.join(folder,'summary.json'));
   if(Object.keys(summary.players).sort().join()!==[...record.players].sort().join())throw new Error('Published player list differs from the analysis.');
   for(const player of record.players){
@@ -47,14 +56,15 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
  await writeFile(path.join(out,'index.html'),html);
  await mkdir(path.join(out,'results'));
  await cp(path.join(root,'published/catalog.json'),path.join(out,'results/catalog.json'));
- for(const {id,players} of catalog.sessions){
+ for(const record of catalog.sessions){
+  const {id}=record;
   await mkdir(path.join(out,'results',id));
-  const files=[...commonFiles,...players.map(p=>`statistics-${p}.json`)];
+  const files=filesFor(record);
   for(const name of files)await cp(path.join(root,'published',id,name),path.join(out,'results',id,name));
  }
  await writeFile(path.join(out,'_headers'),'/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  X-Frame-Options: DENY\n/results/*\n  Cache-Control: public, max-age=0, must-revalidate\n');
  for(const name of ['THIRD_PARTY.md','UPSTREAM_VERSIONS.json'])await cp(path.join(root,name),path.join(out,name));
- console.log(`Static CourtIQ: ${catalog.sessions.length} published run(s); no API, videos, models, secrets or database bindings.`);
+ console.log(`Static CourtIQ: ${catalog.sessions.length} published run(s), ${catalog.sessions.filter(s=>s.animation).length} rendered animation(s); no API, source footage, models, secrets or database bindings.`);
  return out;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await buildSite();

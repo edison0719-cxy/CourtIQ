@@ -4,6 +4,7 @@ import copy
 import json
 import re
 import shutil
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -33,10 +34,10 @@ def trajectory_preview(summary):
     for player, color in [('near', '#10a997'), ('far', '#2468eb')]:
         previous = None
         commands = []
-        for _, time, x, y in summary['players'].get(player, {}).get('trajectory', []):
-            command = 'L' if previous is not None and 0 < time - previous <= .2 else 'M'
+        for frame, time, x, y in summary['players'].get(player, {}).get('trajectory', []):
+            command = 'L' if previous is not None and frame == previous[0] + 1 and 0 < time - previous[1] <= .2 else 'M'
             commands.append(f'{command}{20+y*30:.2f},{20+(6.1-x)*30:.2f}')
-            previous = time
+            previous = (frame, time)
         paths.append(f'<path d="{" ".join(commands)}" stroke="{color}" stroke-width="2" fill="none"/>')
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 442 223">'
             '<rect width="442" height="223" rx="12" fill="#f0faf7"/>'
@@ -80,24 +81,51 @@ def export_session(folder, destination, title, venue):
     return public
 
 
+def publish_record(source, destination, title, venue, animation=False):
+    destination.mkdir(parents=True, exist_ok=True)
+    catalog_file = destination / 'catalog.json'
+    catalog = json.loads(catalog_file.read_text()) if catalog_file.exists() else {'schema_version': 1, 'sessions': []}
+    # Prepare everything beside the destination. Encoding failure leaves the last publication intact.
+    with tempfile.TemporaryDirectory(prefix='.courtiq-publish-', dir=destination.parent) as temp:
+        staging = Path(temp)
+        public = export_session(source, staging, title, venue)
+        folder = staging / public['id']
+        if animation:
+            from render_animation import render_animation
+            public['animation'] = render_animation(folder, folder)
+            write_json(folder / 'session.json', public)
+        catalog['sessions'] = [public] + [s for s in catalog['sessions'] if s['id'] != public['id']]
+        catalog['published_at'] = datetime.now(timezone.utc).isoformat()
+        write_json(staging / 'catalog.json', catalog)
+        target, backup = destination / public['id'], staging / 'previous'
+        if target.exists():
+            target.rename(backup)
+        try:
+            folder.rename(target)
+            (staging / 'catalog.json').replace(catalog_file)
+        except BaseException:
+            if target.exists():
+                shutil.rmtree(target)
+            if backup.exists():
+                backup.rename(target)
+            raise
+    return public
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('session_id', help='Completed local session ID')
     parser.add_argument('--title', required=True, help='Public title, reviewed for publication')
     parser.add_argument('--venue', default='', help='Optional public venue label')
     parser.add_argument('--confirm-public', action='store_true', help='Acknowledge that results will be public')
+    parser.add_argument('--animation', action='store_true', help='Render a court animation from observed trajectories locally')
     args = parser.parse_args()
     if not args.confirm_public:
         parser.error('Results become public; review rights and metadata, then pass --confirm-public.')
     if not re.fullmatch(r'[a-f0-9]{32}', args.session_id):
         parser.error('Invalid session ID.')
     destination = ROOT / 'published'
-    public = export_session(ROOT / 'data' / 'sessions' / args.session_id, destination, args.title, args.venue)
-    catalog_file = destination / 'catalog.json'
-    catalog = json.loads(catalog_file.read_text()) if catalog_file.exists() else {'schema_version': 1, 'sessions': []}
-    catalog['sessions'] = [public] + [s for s in catalog['sessions'] if s['id'] != public['id']]
-    catalog['published_at'] = datetime.now(timezone.utc).isoformat()
-    write_json(catalog_file, catalog)
+    public = publish_record(ROOT / 'data' / 'sessions' / args.session_id, destination, args.title, args.venue, args.animation)
     print(f'Published data for {public["id"]}. Original video and private metadata excluded.')
 
 

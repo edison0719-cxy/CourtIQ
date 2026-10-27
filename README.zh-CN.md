@@ -12,18 +12,18 @@ npm run build:site
 npm run site:dev
 ```
 
-网站直接读取 `published/` 中的真实分析结果，支持轨迹时间回放、热力图、空间统计、时间块 Bootstrap 区间、标定与阈值敏感性分析，以及 CSV / JSON / 统计图下载。目前仅发布上游真实比赛样本的 5 秒分析结果，保留示例标签，不计入场馆试点成果；不包含学生视频、学生训练成绩或原始转播画面。
+网站直接读取 `published/` 中的真实分析结果，支持已生成动画视频播放 / 下载、交互轨迹回放、热力图、空间统计、时间块 Bootstrap 区间、标定与阈值敏感性分析，以及 CSV / JSON / 统计图下载。目前仅发布上游真实比赛样本的 5 秒分析结果，保留示例标签，不计入场馆试点成果；不包含学生视频、学生训练成绩或原始转播画面。
 
 Cloudflare Workers Builds 连接本仓库：分支 `main`，根目录 `/`，Build command 为 `npm ci --include=dev`，Deploy command 为 `npm run cloud:deploy:git`。该命令使用 `wrangler.site.jsonc` 仅部署静态资源，不需要 `COURTIQ_*` 变量、Access、R2、D1、Queues、Containers 或 Workers Paid；静态打包不会读取原有密钥。详见 [部署指南](CLOUD_DEPLOY.zh-CN.md)。
 
 学生视频在本地完成分析，审核公开权限和内容后发布对应结果：
 
 ```sh
-.venv/bin/python publish.py 实际训练记录ID --title "公开训练名称" --venue "公开场馆名称" --confirm-public
+.venv/bin/python publish.py 实际训练记录ID --title "公开训练名称" --venue "公开场馆名称" --animation --confirm-public
 npm run build:site
 ```
 
-将生成的 `published/` 文件提交到 Git 并推送 `main` 即可更新。导出器使用匿名近端 / 远端球员标签，不导出原始视频、原文件名、视频帧、私人姓名、教练备注、人工成绩记录、日志或模型。每份结果保留真实运行编号和轨迹指纹。发布后轨迹及统计数据可被公开读取，提交前需审核；本地计算依赖 Python，Cloudflare 打包只需要 Node.js。
+将生成的 `published/` 文件提交到 Git 并推送 `main` 即可更新。导出器使用匿名近端 / 远端球员标签，不导出原始视频、原文件名、视频帧、私人姓名、教练备注、人工成绩记录、日志或模型。`--animation` 在本地用真实观测轨迹生成 720p H.264 动画及封面，不包含原始转播画面；省略该参数则只发布交互数据。每份结果和动画保留真实运行编号、轨迹与文件指纹。发布后轨迹及统计数据可被公开读取，提交前需审核；本地计算依赖 Python，Cloudflare 打包只需要 Node.js。
 
 ## 启动
 

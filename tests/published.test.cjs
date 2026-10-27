@@ -43,6 +43,15 @@ test('replay never shows a future detection or fills a missing interval',()=>{
  assert.deepEqual(positionAt(points,.6),points[2]);
 });
 
+test('the sample animation is a downloadable, provenance-linked published artifact',async()=>{
+ const data=reader(),session=(await data.list()).find(s=>s.is_example);
+ assert.ok(session.animation,'Publish the actual sample animation');
+ assert.equal(data.file(session.id,session.animation.file),`/results/${session.id}/trajectory.mp4`);
+ assert.equal(session.animation.run_id,session.run_id);
+ const manifest=await data.manifest(session.id);
+ assert.equal(session.animation.trajectory_sha256,manifest.trajectory_sha256);
+});
+
 test('static build publishes data only and rejects private/stale files',async()=>{
  const {buildSite}=await import('../build-site.mjs');
  const temp=await fs.mkdtemp(path.join(os.tmpdir(),'courtiq-publication-'));
@@ -64,6 +73,10 @@ test('static build publishes data only and rejects private/stale files',async()=
   const privatePath=path.join(temp,'private.png');await fs.writeFile(privatePath,original);
   await fs.symlink(privatePath,chart);await assert.rejects(buildSite(temp),/regular file/);
   await fs.unlink(chart);await fs.writeFile(chart,original);
+  const animation=path.join(temp,'published',session.id,'trajectory.mp4');
+  const video=await fs.readFile(animation);await fs.appendFile(animation,'corruption');
+  await assert.rejects(buildSite(temp),/Animation.*fingerprint/);
+  await fs.writeFile(animation,video);
   await fs.appendFile(path.join(temp,'published',session.id,'players.csv'),'\n');
   await assert.rejects(buildSite(temp),/provenance/);
  }finally{await fs.rm(temp,{recursive:true,force:true});}
@@ -85,6 +98,8 @@ test('a run with only one observed player does not require an invented second re
   const catalogPath=path.join(temp,'published/catalog.json');
   const catalog=JSON.parse(await fs.readFile(catalogPath));const record=catalog.sessions.find(s=>s.is_example);
   const folder=path.join(temp,'published',record.id);
+  delete record.animation;
+  await fs.unlink(path.join(folder,'trajectory.mp4'));await fs.unlink(path.join(folder,'animation-poster.jpg'));
   record.players=['near'];await fs.writeFile(catalogPath,JSON.stringify(catalog));
   await fs.writeFile(path.join(folder,'session.json'),JSON.stringify(record));
   const summary=JSON.parse(await fs.readFile(path.join(folder,'summary.json')));delete summary.players.far;

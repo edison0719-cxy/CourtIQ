@@ -1,5 +1,9 @@
 /* UI copy only. Training names, filenames and coach notes remain user content. */
 const english = Object.freeze({
+  '动画视频':'Animation',
+  '交互轨迹':'Interactive trajectories',
+  '动画下载':'Download animation',
+  '动画暂不可用，请查看交互轨迹。':'Animation unavailable. Explore the interactive trajectories instead.',
   '运动数据实验室':'Movement Data Lab',
   '结果工作台':'Results workspace',
   '分析档案':'Analysis library',

@@ -40,5 +40,17 @@
   "players": [
     "near",
     "far"
-  ]
+  ],
+  "animation": {
+    "file": "trajectory.mp4",
+    "poster": "animation-poster.jpg",
+    "sha256": "152ba010c3170c56b410714ffbafee882fe8a6b9187399148eea5abe0cf8671c",
+    "poster_sha256": "996a395efc0c5d6b0ed92a26efb433ee14cb84fa9534cbc4c3dd21d32ef12925",
+    "trajectory_sha256": "ddc0a04a7c2c588df740077123185fc79ff0ac2db451dd678d4e59f0f6282df2",
+    "run_id": "299705b4e6534031b86ee0d50080a9a4",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "duration_s": 5.0
+  }
 }

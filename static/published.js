@@ -23,7 +23,7 @@
    return catalog;
   };
   function file(id,name){
-   if(!/^[a-f0-9]{32}$/.test(id)||!['session.json','summary.json','manifest.json','players.csv','analytics.png','preview.svg','statistics-near.json','statistics-far.json'].includes(name))throw new Error('无效的数据文件。');
+   if(!/^[a-f0-9]{32}$/.test(id)||!['session.json','summary.json','manifest.json','players.csv','analytics.png','preview.svg','statistics-near.json','statistics-far.json','trajectory.mp4','animation-poster.jpg'].includes(name))throw new Error('无效的数据文件。');
    return `/results/${id}/${name}`;
   }
   return {

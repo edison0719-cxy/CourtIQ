@@ -1,119 +1,134 @@
-# CourtIQ 羽域 · 本地训练分析工作台
+# CourtIQ · Badminton Training Analytics
 
-已整合真实视频推理、空间统计、时间块重采样、标定敏感性实验及训练组间比较。学生视频可从界面导入。
+**English** | [简体中文](README.zh-CN.md)
 
-## 启动
+A local workbench for fixed-camera badminton video analysis and statistical research: from calibrated movement trajectories to reproducible training comparisons. The interface supports Chinese and English.
 
-当前电脑已准备好 `.venv`、两项模型权重和 FFmpeg。双击 **启动CourtIQ.command**，然后打开 <http://127.0.0.1:8765>。保持启动终端运行，按 Control+C 停止。若同一端口的 CourtIQ 已在运行，直接打开该地址即可。
+## Start the workbench
 
-界面采用浅色数字运动风格。右上角 **中文 / EN** 一键切换界面语言并记住选择；上传弹窗内也可切换。界面、图表标注、表单和状态提示随语言更新，视频进度、分析参数、球员选择与未保存笔记保持不变。自定义名称、笔记、文件内容及上游原始运行日志保留原文。
+For a fresh checkout, complete [Installation](#installation) and restore the files listed under [Source code and local assets](#source-code-and-local-assets) first.
 
-也可以在本目录运行：
+On a Mac already configured with `.venv`, both model weights, and FFmpeg, double-click **启动CourtIQ.command**, then open <http://127.0.0.1:8765>. Keep the terminal running; press Control+C to stop the service. If CourtIQ is already running on that port, open the URL directly.
+
+Use **中文 / EN** in the top-right corner to switch languages. The import dialog also has a language switch. Interface labels, chart labels, forms, and status messages update while preserving video playback position, analysis settings, player selection, and unsaved notes. User-entered names, notes, filenames, and original upstream logs retain their original text. The language preference is remembered in the browser.
+
+You can also start the service from the project directory:
 
 ```sh
 .venv/bin/python app.py
 ```
 
-## 使用
+## Workflow
 
-1. 点击“导入视频”，选择真实训练/比赛片段，填写训练名、场馆与两名球员的名称。数据保存在本机。
-2. 在“球场标定”页依次点击 **双打外边线四角：远端左、远端右、近端右、近端左**，保存标定。坐标原点是画面中的远端左角，球场为 6.1 × 13.4 m；即便分析单打也应点双打外线。
-3. 先运行前 5–30 秒核对效果，再选择完整视频。开启球追踪后处理会更慢。设备自动优先选择可用 GPU；主系统 TrackNet 本身仅使用 CPU（本整合版未扩展其 MPS 后端）。
-4. 完成后查看原片/分析视频、近端/远端热图、轨迹、凸包、区域分布、区域转移、速度曲线及观测质量。
-5. 下载轨迹 CSV、统计图和分析视频；在“质控与方法”下载参数与方法清单；在“教练记录”保存人工观察。
+1. Select **Import video**, choose a real match or training clip, and enter a session name, venue, and player names. Files and results stay on the local computer.
+2. Open **Court calibration** and select the four **outer doubles-court corners** in this order: far left, far right, near right, near left. Save the calibration. The coordinate origin is the far-left corner in the camera view; the full court measures 6.1 × 13.4 m. Use the doubles sidelines even when analyzing singles.
+3. Analyze the first 5–30 seconds to review detection quality before processing a longer clip. Shuttle tracking adds processing time. Automatic device selection prefers an available GPU for player tracking; the upstream TrackNet stage runs on CPU in this integration and has no added MPS backend.
+4. Review the original or analyzed video, near/far player heatmaps, trajectories, convex hulls, zone occupancy, zone transitions, speed profiles, and observation quality.
+5. Export trajectory CSV, charts, and the analysis video. Download run parameters and methods from **Quality & methods**, and save manual observations under **Coach notes**.
 
-“示例视频”会创建一条标明来源的公开比赛样本记录，**不是学生视频或模拟数据**。仍需核对四角。当前已有一条 5 秒的真实推理验证结果。上游样本的参考角点为 `(352,342), (628,343), (944,527), (52,532)`，只适用于这一个样本，不能用于其他录像。
+**Demo video** creates a clearly labeled record from the upstream public match sample. It is neither student footage nor simulated tracking data. Check its calibration before running it. A five-second segment was used for local end-to-end validation; that run is local data and is not distributed with this Git repository.
 
-## 统计研究与专项评估
+Reference corners for that specific upstream sample are `(352,342), (628,343), (944,527), (52,532)`. They do not apply to other recordings.
 
-打开 <http://127.0.0.1:8765/#research>，或点击左侧“统计研究”。无需重新推理，直接读取每次运行保存的完整轨迹 CSV。
+## Statistical research and task evaluation
 
-- **单次训练**：速度分位数、直方图、六区域 Shannon 信息熵、0.5 / 1 / 2 秒时间块 bootstrap 均速区间；6 / 8 / 10 m/s 过滤阈值敏感性。
-- **标定误差传播**：固定原检测位置，用原单应性逆变换回图像坐标，对四角施加 σ = 0 / 1 / 2 / 5 px 的独立高斯扰动，重新投影。每档 200 次，最多均匀抽取 2,500 个位置，报告平均/P95 位移及区域变化比例。它是设定误差下的敏感性实验，不是实测精度。
-- **专项训练评估**：展开记录表，填写任务、尝试/成功次数、原片区间及可选复盘耗时。按球员分别保存人工观察，成功率附 Wilson 95% 区间。数据不会自动生成。
-- **组间比较**：每条真实录像选择一名球员和 A/B 组；配对设计再填写共同编号。可比较专项成功率、复盘耗时、均速、每分钟观测距离、有效观测率和位置凸包面积。成绩缺失时可点击“补充成绩”。
-- **方法**：独立设计使用 Welch 均值差区间及 Cliff’s δ；配对设计使用配对 t 区间及 Cohen’s dz。差值始终是 B − A，样本单位为录像或匹配录像对；重复帧不是独立样本。公开样本、重复录像编号、相同原始录像及完全相同轨迹不能重复计数。
-- **导出**：统计 CSV、逐条比较 CSV、研究 JSON；JSON 保留运行编号、原片/轨迹 SHA-256、参数、种子、方法及人工观察来源。研究问题和组别设置保存在本浏览器。
+Open <http://127.0.0.1:8765/#research> or select **Statistical research**. Calculations read the complete trajectory CSV saved for each run, without rerunning the tracking models.
 
-时间块 bootstrap 固定种子为 20261026，重采样 2,000 次；区间针对有效观测下的距离/时间比，依赖块间近似独立与分布相对稳定的假设，不包含检测或标定系统误差。两组或配对的独立性由研究设计保证；小样本会标记，样本量不足/方差退化时不给出无依据的区间或 p 值。p 值为双侧且未校正多重比较。Wilson 区间假设二项试验，相关尝试应按实际设计处理。专项比较要求任务名称一致。
+- **Single-session analysis:** speed quantiles, a speed histogram, six-zone Shannon entropy, mean-speed bootstrap intervals using 0.5 / 1 / 2 s time blocks, and sensitivity to 6 / 8 / 10 m/s motion filters.
+- **Calibration error propagation:** hold detections fixed, invert the original homography to recover image positions, perturb the four corner coordinates independently with Gaussian noise at σ = 0 / 1 / 2 / 5 px, and project again. Each scenario uses 200 simulations and up to 2,500 evenly sampled positions. Outputs include mean/P95 displacement and the fraction of positions changing zones. These are sensitivity scenarios under specified errors, not measured calibration accuracy.
+- **Task performance evaluation:** enter the task, attempts, successes, source-video interval, and optional review time. Manual observations are stored separately for each player. Success rates include Wilson 95% intervals; observations are not generated automatically.
+- **Group comparison:** select one player per real recording and assign group A or B. For paired designs, enter matching pair IDs. Outcomes include task success rate, review time, mean speed, observed distance per minute, valid observation rate, and position hull area. **Record outcomes** opens the observation form when a task outcome is missing.
+- **Comparison methods:** independent groups use Welch mean-difference intervals and Cliff’s δ; paired data use paired t intervals and Cohen’s dz. Differences are always B − A. Units are recordings or matched recording pairs, not repeated video frames. Public demos, repeated session IDs, identical source recordings, and identical trajectories cannot be counted as separate samples.
+- **Exports:** statistics CSV, comparison CSV with individual recording values, and research JSON. JSON preserves run IDs, source/trajectory SHA-256 hashes, parameters, the random seed, methods, and manual-observation provenance. Research questions and group selections are stored in the browser.
 
-### 建议学生执行的研究
+The time-block bootstrap uses seed `20261026` and 2,000 resamples. Its intervals describe the distance/time ratio conditional on valid observations, assuming approximately independent blocks and a reasonably stable motion distribution. They do not include systematic detection or calibration errors. Independence between recordings or pairs must come from the study design. Small samples are flagged; unsupported intervals or p-values are omitted when sample size or variance is insufficient. P-values are two-sided and unadjusted for multiple comparisons. Wilson intervals assume binomial trials; correlated attempts require an appropriate design. Task-outcome comparisons require matching task names.
 
-主线可以定为 **“羽毛球训练评估中的空间统计与不确定性量化”**。保留三个可检验的问题：
+### Research workflow
 
-| 研究问题 | 采集与操作 | 产出 |
+The research theme is **spatial statistics and uncertainty quantification in badminton training evaluation**. Three questions can guide a study:
+
+| Research question | Data collection and analysis | Outputs |
 | --- | --- | --- |
-| 结论对标定误差是否稳定？ | 对同一段录像独立重复四角标定，估计实际标注差异；用系统的扰动实验检查其影响 | 标注差异、位移与区域变化曲线；假设与实测误差的对应 |
-| 视频帧的时间相关性是否改变区间？ | 使用相同轨迹比较 0.5 / 1 / 2 秒分块，查看连续运动和缺失的影响 | 三种区间、有效块数、结果稳定性说明 |
-| 专项表现和复盘效率怎样变化？ | 定义同一训练任务、命中标准与拍摄条件；记录训练前后成功次数与复盘耗时，按运动员/任务配对 | 成功率与 Wilson 区间、配对差值/效应量、教练核对意见 |
+| Are conclusions stable under calibration error? | Independently repeat four-corner annotations on the same recording, estimate annotation variation, and examine its effect with the perturbation experiment. | Annotation differences, displacement and zone-change curves, and a comparison of assumed versus observed annotation errors. |
+| Does temporal dependence change the interval estimate? | Compare 0.5 / 1 / 2 s blocks on the same trajectories, accounting for continuous movement and missing observations. | Three interval estimates, valid block counts, and a stability assessment. |
+| How do task performance and review efficiency change? | Define a common task, success criterion, and filming protocol; record before/after successes and review time, matching by athlete and task. | Success rates and Wilson intervals, paired differences/effect sizes, and coach review. |
 
-先试采以检查流程和估计变异，再确定正式样本量。群体研究优先让每名运动员贡献一个事先定义的配对；同一人的多次配对不能直接当作独立运动员扩充样本。训练前后差异用于探索；若要论证反馈干预的因果效果，还需合适的随机分配、对照和执行记录。指标高低的训练含义由具体任务决定，不能将更大速度、更多跑动或更高信息熵直接解释为更优秀。
+Pilot data should check the workflow and estimate variability before setting a formal sample size. For a group study, prefer one predefined pair per athlete. Repeated pairs from one person are not additional independent athletes. Before/after differences support exploration; causal claims about feedback interventions need suitable randomization, controls, and execution records. The meaning of a metric depends on the task: greater speed, more movement, or higher entropy does not automatically mean better performance.
 
-学生本人负责提出/修改问题、定义人工判定标准、采集与核验数据、说明反例和解释结果。开源识别、开发协助、统计工具与学生实际贡献应分别记录。
+Research records should identify contributions to question definition, annotation criteria, data collection and verification, counterexample analysis, and interpretation, separately from upstream recognition models, development assistance, and statistical tooling.
 
-方法参考：[时间序列分块 bootstrap](https://www.stat.cmu.edu/~cshalizi/uADA/16/lectures/26.pdf)、[Welch t 检验与区间](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html)、[配对 t](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html)、[Wilson 区间](https://docs.scipy.org/doc/scipy-1.16.1/reference/generated/scipy.stats._result_classes.BinomTestResult.proportion_ci.html)、[OpenCV 单应性](https://docs.opencv.org/4.x/da/d54/group__imgproc__transform.html)。
+Method references: [time-series block bootstrap](https://www.stat.cmu.edu/~cshalizi/uADA/16/lectures/26.pdf), [Welch test and intervals](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html), [paired t test](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html), [Wilson interval](https://docs.scipy.org/doc/scipy-1.16.1/reference/generated/scipy.stats._result_classes.BinomTestResult.proportion_ci.html), and [OpenCV homography](https://docs.opencv.org/4.x/da/d54/group__imgproc__transform.html).
 
-## 球馆升级与城市体育扩展
+## Venue upgrades and city sports research
 
-从左侧“城市体育规划”进入 <http://127.0.0.1:8765/#city>，可查看“运动员反馈 → 球馆试点 → 城市推广”的项目路径、训练质量与推广评估框架。
+Select **City sports planning** or open <http://127.0.0.1:8765/#city> to explore the progression from athlete feedback to venue pilots and wider sports services, with an evaluation framework for training quality and service expansion.
 
-场馆汇总使用现有训练记录的场馆字段，展示已登记球馆数、训练记录数、完成分析数及已填写教练记录的训练数。公开演示样本自动排除；未填写场馆的训练单列，不增加已登记球馆数。点击“导入场馆训练视频”可直接进入导入流程并定位场馆字段，已存在的场馆行可打开最近训练。
+Venue summaries group local training records by their venue field and show registered venues, training records, completed analyses, and sessions with coach notes. Public demos are excluded. Records without a venue are listed separately and do not increase the registered-venue count. **Import a venue training video** opens the import dialog with the venue field focused; existing venue rows open their latest session.
 
-这些计数衡量服务记录的完整性，不证明训练质量提升。扩展页将复盘效率、反馈理解、同任务训练表现和服务成本列为待试点评估项；城市推广还需要多场馆预约、使用率、需求与交通可达性数据。当前没有自动城市设施选址、资源优化或训练效果因果评估模型。该页与整个工作台一起支持中英文切换。
+These counts describe service documentation, not demonstrated training improvement. Pilot evaluation covers review efficiency, feedback comprehension, performance on standardized tasks, and service costs. City-scale expansion additionally requires multi-venue booking, utilization, demand, and transport-accessibility data. Automated facility siting, resource optimization, and causal evaluation of training effects are not implemented. This page also supports both interface languages.
 
-## 当前能力与边界
+## Capabilities and scope
 
-- 适用于固定机位、完整球场可见的单打片段；尚未验证双打身份追踪、多球场或移动机位。
-- 输出包含描述性统计和依赖明确假设的探索性区间/组间比较；没有最优回位、动态可达域、自动训练质量评分或城市资源规划模型。
-- 使用上游球员识别/追踪代码；仅导出真实检测位置供统计，光流预测与保持位置不作为观测。
-- 距离只累加连续有效检测对，跳帧、时间间隔超过 0.2 秒或估计速度超过 8 m/s 的对不计入。8 m/s 是可审查的异常过滤假设，不是研究发现。位置抖动仍会影响距离。
-- 凸包是观测位置的几何包络，平均位置描述选定片段；二者不等于场地控制力或最佳回位。
-- 区域转移是逐帧经验频率，含自转移，受帧率影响；比较不同视频前应统一帧率。
-- 羽毛球轨迹仅画在原始相机视角。空中羽毛球不通过地面单应性投影到球场，因此不声称得到真实三维轨迹、球速或落点。
-- 上游旧运动统计叠加层已关闭，避免其基于保持/预测位置的数值与轨迹报告口径不一致。
-- 分析时长在界面明确标记。短片结果不能代表整场比赛。
-- 单机本地使用，服务仅监听 127.0.0.1；不应直接公开到互联网。
+- Designed for fixed-camera singles clips with the complete court visible. Doubles identity tracking, multiple courts, and moving cameras have not been validated.
+- Outputs include descriptive statistics and exploratory intervals/comparisons under explicit assumptions. Optimal recovery positions, dynamic reachability, automatic training-quality scores, and city resource-planning models are not implemented.
+- Player recognition/tracking uses the upstream pipeline. Statistics use actual detector observations; optical-flow predictions and held positions are excluded.
+- Distance sums consecutive valid detections only. Frame gaps, time gaps above 0.2 s, and estimated speeds above 8 m/s are excluded. The 8 m/s cutoff is an inspectable filtering assumption, not a research finding. Localization jitter can still affect distance.
+- Convex hulls describe the envelope of observed positions, and mean positions describe the selected clip. Neither establishes tactical control or optimal recovery.
+- Zone transitions are empirical adjacent-frame frequencies, including self-transitions, and depend on frame rate. Standardize frame rates before comparing recordings.
+- Shuttle trajectories are drawn only in the original camera view. An airborne shuttle is not mapped to the ground plane through the court homography; the software does not estimate true 3D trajectories, shuttle speed, or landing positions.
+- The upstream movement-statistics overlay is disabled so that predicted/held-position metrics do not conflict with the exported observation-based report.
+- The analyzed duration is explicitly displayed. Short-clip statistics do not represent a whole match.
+- Intended for single-computer local use. The service listens on `127.0.0.1` and should not be exposed directly to the internet.
 
-## 文件位置
+## Project layout
 
 ```text
-app.py                 本地 API、上传、队列、训练记录与文件下载
-pipeline.py            FFmpeg / TrackNet / 球员追踪 / 统计的真实任务流程
-analysis.py            共享观测/运动过滤、米制空间统计与导出图表
-research.py            时间分块、标定扰动、成功率及组间统计
-static/                双语工作台及统计研究，无前端构建步骤或 CDN
-tests/                 真实行为单元/API 测试
-vendor/                两个指定上游项目的代码、许可及主模型权重
-data/sessions/<id>/     视频、预览、标定、教练记录
-  runs/<run-id>/       每次独立运行的结果与日志；重新分析不覆盖旧运行
-THIRD_PARTY.md         来源、许可说明、整合改动与方法适配
+app.py                 Local API, uploads, queue, records, and file downloads
+pipeline.py            FFmpeg / TrackNet / player tracking / analytics workflow
+analysis.py            Shared observation/motion filters, court statistics, chart exports
+research.py            Time blocks, calibration perturbations, outcomes, group statistics
+static/                Bilingual UI and research workspace; no frontend build or CDN
+tests/                 Behavioral unit and API tests
+vendor/                Upstream source and licensing notices; local weights when restored
+data/sessions/<id>/    Local videos, previews, calibration, and coach notes
+  runs/<run-id>/       Separate run artifacts and logs; reruns preserve earlier runs
+THIRD_PARTY.md         Source attribution, integration changes, and method adaptations
 ```
 
-第二个仓库下载了全部程序/Notebook 源文件与说明，未保留其大型训练数据集、演示视频和训练权重：本系统复用它的统计方法，不使用其检测模型。上游 Notebook 原名没有 `.ipynb` 扩展名，原文件保存在 `vendor/Badminton_Analytics_Project/notebooks/Badminton Analysis`。
+The second upstream project’s program/notebook source, documentation, and license are retained, without its large training datasets, demo videos, or training weights. CourtIQ adapts its statistical methods rather than running its detection model. The original notebook has no `.ipynb` extension and is preserved at `vendor/Badminton_Analytics_Project/notebooks/Badminton Analysis`.
 
-## 源码仓库与本机文件
+The main pipeline is based on [badminton-pipeline-repro](https://github.com/ychenfen/badminton-pipeline-repro); spatial methods are adapted from [Badminton_Analytics_Project](https://github.com/muhammadyasin79/Badminton_Analytics_Project). Their code, model weights, media, and dependencies retain their respective terms. The main upstream README states MIT for its code, but supplies no separate LICENSE file; the second project includes its MIT license. See [source attribution and integration notes](THIRD_PARTY.md) and [recorded upstream versions](UPSTREAM_VERSIONS.json).
 
-Git 仓库保存程序、测试、第三方源码及来源说明；模型权重、视频、训练档案、虚拟环境和本机预览图留在本机。克隆到新电脑后，需要从 [主系统上游仓库](https://github.com/ychenfen/badminton-pipeline-repro) 取得以下文件并放回相同路径：
+## Source code and local assets
+
+Git tracks the application, tests, upstream source, and provenance documents. Model weights, videos, training records, virtual environments, and local preview exports remain on the local computer. After cloning onto a new machine, obtain the following files from the [main upstream repository](https://github.com/ychenfen/badminton-pipeline-repro) and restore these paths:
 
 - `vendor/badminton-pipeline-repro/weights/TrackNet_best.pt`
 - `vendor/badminton-pipeline-repro/weights/yolov8s-pose.pt`
-- `vendor/badminton-pipeline-repro/short.mp4`（使用公开示例与运行相关接口测试时需要）
+- `vendor/badminton-pipeline-repro/short.mp4` — needed for the public demo and related API tests.
 
-本机原上游 Git 记录备份在 `.upstream-git/`，不随源码提交；当前第三方源码直接纳入主仓库，来源版本见 `UPSTREAM_VERSIONS.json`。
+The original upstream Git history is backed up locally in `.upstream-git/` and is not committed. Current third-party source is tracked directly in the main repository; provenance is recorded in `UPSTREAM_VERSIONS.json`.
 
-## 在新环境安装
+## Installation
 
-需要 Python 3.13、FFmpeg，并有上述权重。推荐在新目录创建独立环境：
+The validated environment uses Python 3.13 and FFmpeg. Inference requires the model weights listed above. Clone the source:
 
 ```sh
-python3 -m venv .venv
+git clone https://github.com/edison0719-cxy/CourtIQ.git
+cd CourtIQ
+```
+
+The following commands use macOS/Linux shell syntax. Create a separate environment:
+
+```sh
+python3.13 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python app.py
 ```
 
-当前电脑的虚拟环境复用了已安装的科学计算包，并在项目环境内补齐缺失项。`requirements.txt` 记录本次验证的直接依赖版本。测试额外需要 `httpx`。FFmpeg 是外部命令，不包含在 pip 依赖中。
+`requirements.txt` records the direct dependency versions used for validation. API tests additionally require `httpx`, installed with `.venv/bin/python -m pip install httpx`, and the upstream `short.mp4` for the related tests. JavaScript checks require Node.js. FFmpeg is an external executable and is not installed by pip requirements.
 
-## 验证
+## Validation
 
 ```sh
 .venv/bin/python -m unittest discover -s tests -v
@@ -122,4 +137,4 @@ node --check static/research.js
 node --test tests/*.test.cjs
 ```
 
-测试用的编码视频是临时目录内的测试夹具，不出现在工作台。真实端到端验证使用上游公开样本，覆盖球追踪、球员追踪、CSV、图表和 H.264 输出。推理成功不等于战术指标已达到研究精度；学生录像接入后需检查机位、标定和观测质量。
+Encoded videos used by unit tests are temporary fixtures and never appear as training records in the workbench. Real end-to-end validation used the public upstream sample and covered shuttle tracking, player tracking, CSV, charts, and H.264 output. Successful inference alone does not establish research-grade tactical accuracy; review camera geometry, calibration, and observation quality when introducing new training footage.

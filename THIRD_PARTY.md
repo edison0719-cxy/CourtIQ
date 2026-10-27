@@ -4,7 +4,7 @@
 
 - 仓库：https://github.com/ychenfen/badminton-pipeline-repro
 - 下载方式：浅克隆；通过 Git LFS 获取 `TrackNet_best.pt`、`yolov8s-pose.pt` 与 `short.mp4`。
-- 上游 README 声明代码部分 MIT，权重及视频按原始来源条款使用；上游未提供单独 LICENSE 文件。原始 README、Git 来源与历史均保留在 vendor。
+- 上游 README 声明代码部分 MIT，权重及视频按原始来源条款使用；上游未提供单独 LICENSE 文件。原始 README 与源码保留在 vendor；来源版本记录于 UPSTREAM_VERSIONS.json，原上游 Git 历史备份在本机 .upstream-git/（不随源码提交）。
 - 模型引用：TrackNetV3 (qaz812345/TrackNetV3)、Ultralytics YOLO、ByteTrack。Ultralytics 有其自身许可要求，不因本整合而改变。
 - 比赛样本来源：上游 README 标注 POGBADMINTON；仅作为明确标识的本地流程验证素材。申请作品使用学生自己的授权录像。
 

@@ -1,0 +1,11 @@
+{
+  "main_repository": "https://github.com/ychenfen/badminton-pipeline-repro",
+  "main_commit": "d86ad18f43b4671fcb191c9876e167cce806ccf8",
+  "analytics_repository": "https://github.com/muhammadyasin79/Badminton_Analytics_Project",
+  "analytics_source": "GitHub main archive downloaded 2026-10-26",
+  "analytics_notebook_sha256": "a09b1307e51a2b5cd615853c3e7b38c315dc1d3e245cc8b0b9fa50907174da1d",
+  "weights_sha256": {
+    "TrackNet_best.pt": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
+    "yolov8s-pose.pt": "234314cd8baf62616791aceb9ea6ad5c19f26cf6c0d8f3a1bfce1e23b186cfb3"
+  }
+}

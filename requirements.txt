@@ -1,0 +1,17 @@
+# Python 3.13 used for local validation. No model training dependencies.
+fastapi==0.127.0
+uvicorn==0.40.0
+python-multipart==0.0.32
+torch==2.12.1
+torchvision==0.27.1
+ultralytics==8.4.87
+opencv-python==5.0.0.93
+numpy==2.5.4
+pandas==3.0.2
+Pillow==11.3.0
+scipy==1.16.2
+matplotlib==3.10.6
+tqdm==4.67.1
+parse==1.22.4
+pycocotools==2.0.11
+lap==0.5.13

@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+data/
+*.pyc
+vendor/**/.git/
+
+# Local models, recordings, configuration and preview exports
+.upstream-git/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.mp4
+*.mov
+*.m4v
+*.avi
+*.mkv
+*.webm
+/*.png

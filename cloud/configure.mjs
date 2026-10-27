@@ -4,14 +4,19 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 export function configuration(base,args){
   const origin=new URL(args.origin||'http://invalid');
-  if(origin.protocol!=='https:'||origin.pathname!=='/'||origin.search||origin.hash||origin.username||origin.port)throw new Error('--origin must be the exact HTTPS custom-domain origin.');
+  if(origin.protocol!=='https:'||origin.pathname!=='/'||origin.search||origin.hash||origin.username||origin.port)throw new Error('--origin must be the exact HTTPS application origin.');
   const team=(args['team-domain']||'').replace(/\/$/,'');
   if(!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(team))throw new Error('--team-domain must be your https://TEAM.cloudflareaccess.com URL.');
   if(!/^[a-f0-9]{64}$/.test(args.aud||''))throw new Error('--aud must be the Access application AUD tag.');
   if(!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(args['db-id']||''))throw new Error('--db-id must be the actual D1 database UUID.');
   const cfg=structuredClone(base);
   Object.assign(cfg.vars,{PUBLIC_ORIGIN:origin.origin,ACCESS_TEAM_DOMAIN:team,ACCESS_AUD:args.aud});
-  cfg.d1_databases[0].database_id=args['db-id'];cfg.routes=[{pattern:origin.hostname,custom_domain:true}];
+  cfg.d1_databases[0].database_id=args['db-id'];
+  if(origin.hostname.endsWith('.workers.dev')){
+    const labels=origin.hostname.split('.');
+    if(labels.length!==4||labels[0]!==cfg.name)throw new Error('workers.dev origin must match the configured Worker name and account subdomain.');
+    cfg.workers_dev=true;delete cfg.routes;
+  }else{cfg.workers_dev=false;cfg.routes=[{pattern:origin.hostname,custom_domain:true}];}
   return cfg;
 }
 if(resolve(process.argv[1]||'')===fileURLToPath(import.meta.url)){

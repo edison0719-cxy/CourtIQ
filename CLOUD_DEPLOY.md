@@ -4,6 +4,32 @@
 
 The local `python app.py` workstation remains available. The cloud edition uses Workers static assets, Cloudflare Access, private R2, D1, Queues and Python Containers. Uploading `static/` to Pages alone does not deploy analysis.
 
+## Recommended: deploy directly from GitHub
+
+Workers Builds can build this Dockerfile directly from GitHub; local Docker is unnecessary for this route. GitHub sign-in authenticates the Cloudflare account, while connecting the repository separately enables builds. See [Cloudflare’s official container build instructions](https://developers.cloudflare.com/containers/guides/deploy/).
+
+1. Push the latest code to `edison0719-cxy/CourtIQ`.
+2. Enable Workers Paid and R2 after the account owner confirms billing. Create D1 `courtiq`, private R2 `courtiq-private` and Queue `courtiq-analysis`; retain the D1 UUID.
+3. Choose/view the account’s `workers.dev` subdomain. The Worker name is `courtiq`, so the production origin is `https://courtiq.<account-subdomain>.workers.dev`; no purchased domain is required.
+4. Create a hostname-based Access application allowing only the intended user emails. Record the team domain and AUD. Create the more specific `/internal/storage/*` Bypass application described below.
+5. In Workers & Pages → Create application → GitHub, import the repository. Set Worker name `courtiq`, production branch `main`, root `/`, build command `npm ci --include=dev`, deploy command `npm run cloud:deploy:git`.
+6. Set these under Settings → Builds → Variables and secrets before retrying the initial build:
+
+| Build variable | Value |
+| --- | --- |
+| `COURTIQ_PUBLIC_ORIGIN` | Actual full `https://courtiq.<account-subdomain>.workers.dev` origin |
+| `COURTIQ_ACCESS_TEAM_DOMAIN` | Actual `https://<team>.cloudflareaccess.com` domain |
+| `COURTIQ_ACCESS_AUD` | Main Access application’s AUD tag |
+| `COURTIQ_D1_DATABASE_ID` | Actual D1 database UUID |
+| `COURTIQ_INTERNAL_SECRET` | Random value of at least 32 characters; save as a build Secret |
+
+The script validates settings, generates configuration, applies D1 migrations and runs full `wrangler deploy`. It passes the runtime secret via a temporary file that is excluded from Git and Docker and removed afterwards. Do not commit local configuration, passwords or OAuth tokens. Missing settings stop deployment with an actionable error.
+
+7. Upload the two genuine models once to private R2 keys `models/TrackNet_best.pt` and `models/yolov8s-pose.pt`, through the R2 dashboard or the optional existing seed command. Keep weights outside Git.
+8. Run/retry the production build, inspect its logs, wait for container provisioning and complete the five-second real-video acceptance test below. Later pushes to `main` deploy automatically.
+
+The local Docker/CLI prerequisites below apply only if choosing local deployment instead.
+
 ## Runtime
 
 Access JWTs are verified before every private request. D1 records are scoped to the token subject; the R2 bucket stays private. Source videos upload in 8 MiB parts, with per-part SHA-256 checks when resuming and a server-computed final source hash. Select the same file again after pausing.

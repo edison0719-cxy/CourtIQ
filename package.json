@@ -9,7 +9,8 @@
     "cloud:check": "node cloud/check.mjs",
     "cloud:seed": "node cloud/seed.mjs",
     "cloud:configure": "node cloud/configure.mjs",
-    "test:integration": "node cloud/integration.mjs"
+    "test:integration": "node cloud/integration.mjs",
+    "cloud:deploy:git": "node cloud/git-build.mjs"
   },
   "dependencies": {
     "@cloudflare/containers": "0.3.7",

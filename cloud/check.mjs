@@ -19,13 +19,13 @@ try{
     const cfg=JSON.parse(await readFile(configPath,'utf8'));
     if(!Number.isInteger(Number(cfg.vars.MAX_JOB_SECONDS))||Number(cfg.vars.MAX_JOB_SECONDS)<60||Number(cfg.vars.MAX_JOB_SECONDS)>7200)throw new Error('MAX_JOB_SECONDS must be between 60 and 7200 (capability lifetime limit).');
     configuration(cfg,{origin:cfg.vars.PUBLIC_ORIGIN,'team-domain':cfg.vars.ACCESS_TEAM_DOMAIN,aud:cfg.vars.ACCESS_AUD,'db-id':cfg.d1_databases[0].database_id});
-    if(!cfg.routes?.some(r=>r.pattern===new URL(cfg.vars.PUBLIC_ORIGIN).hostname&&r.custom_domain))throw new Error('Custom domain route is missing.');
-    console.log('PASS: Local deployment configuration has valid domain, Access fields and D1 ID.');
+    if(!cfg.workers_dev&&!cfg.routes?.some(r=>r.pattern===new URL(cfg.vars.PUBLIC_ORIGIN).hostname&&r.custom_domain))throw new Error('Application route is missing.');
+    console.log('PASS: Local deployment configuration has valid application origin, Access fields and D1 ID.');
   }else if(configured)throw new Error('Run cloud:configure with your real Cloudflare values first.');
   else console.log('PENDING: Cloudflare account values are intentionally unset. See CLOUD_DEPLOY.zh-CN.md.');
   const docker=spawnSync('docker',['info'],{stdio:'ignore'});
   if(docker.status===0)console.log('PASS: Docker daemon is available. Build with docker build --platform linux/amd64 -t courtiq .');
   else if(configured)throw new Error('Install/start Docker before deploying the container image.');
-  else console.log('PENDING: Docker is unavailable; image build and production runtime are not verified.');
+  else console.log('PENDING: Docker is unavailable; local image build is unavailable; Workers Builds can build the image from GitHub. Production runtime is not verified.');
 }catch(error){console.error(error.message);process.exitCode=1;}
 finally{await rm(folder,{recursive:true,force:true});}

@@ -11,3 +11,10 @@ test('configuration rejects insecure origins, paths and missing identity/resourc
   for(const origin of ['http://court.example.org','https://court.example.org/path','https://court.example.org/?x=1'])assert.throws(()=>configuration(base,{...valid,origin}));
   for(const key of ['aud','db-id','team-domain'])assert.throws(()=>configuration(base,{...valid,[key]:''}));
 });
+test('workers.dev configuration enables only the named production worker without a custom domain route',()=>{
+  const cfg=configuration(base,{...valid,origin:'https://courtiq.my-account.workers.dev'});
+  assert.equal(cfg.workers_dev,true);assert.equal(cfg.preview_urls,false);assert.equal(cfg.routes,undefined);
+  assert.equal(cfg.vars.PUBLIC_ORIGIN,'https://courtiq.my-account.workers.dev');
+  assert.throws(()=>configuration(base,{...valid,origin:'https://wrong-worker.my-account.workers.dev'}));
+  assert.equal(base.workers_dev,false);
+});

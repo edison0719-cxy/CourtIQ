@@ -1,6 +1,38 @@
-# CourtIQ on Cloudflare
+# CourtIQ · Static results deployment
 
 [简体中文](CLOUD_DEPLOY.zh-CN.md) · [Project README](README.md)
+
+The default edition computes locally and publishes reviewed results. It serves real JSON, CSV and charts with bilingual visualizations and observed trajectory replay. It has no upload API, online inference or login dependency.
+
+## Reuse the existing GitHub connection
+
+| Setting | Value |
+| --- | --- |
+| Repository | `edison0719-cxy/CourtIQ` |
+| Production branch / root | `main` / `/` |
+| Build command | `npm ci --include=dev` |
+| Deploy command | `npm run cloud:deploy:git` |
+
+Push the latest code, save these settings, disable Preview builds, and retry the latest commit. All old `COURTIQ_*` build variables are unused and may be removed. `SKIP_DEPENDENCY_INSTALL=1` may remain; the explicit build command installs JavaScript tools. Python analysis requirements now live under `requirements/analysis.txt` to prevent automatic root-level pip installation.
+
+The assets-only `wrangler.site.jsonc` enables **https://courtiq.edisonruby419.workers.dev**. No purchased domain, Zero Trust signup, payment details, D1 ID, Access team/AUD, internal secret, R2, Queues, models, Containers or Docker are required by this configuration. Existing database resources are untouched. If a separate Access application already protects this hostname, remove that showcase restriction in your own dashboard. [Cloudflare documents free static asset requests](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/); asset size/count and build quotas still apply.
+
+## Validate and publish data
+
+```sh
+npm ci --include=dev
+npm test
+npm run build:site
+npm run site:dev
+```
+
+`dist/` is generated, not committed. The build never reads local credentials, recordings or models. `published/` currently contains only the clearly labeled, genuine five-second upstream example. It makes no student performance claims. Follow the README's explicit `publish.py` command to export reviewed local results; push the generated publication files to update the site. Original footage stays local. Cohort editing and manual outcome entry remain in the local workstation.
+
+---
+
+# Optional appendix: full cloud uploads and inference (not currently deployed)
+
+The following instructions apply only if online processing is deliberately enabled later. They involve paid resources and identity configuration; the static site uses none of them.
 
 The local `python app.py` workstation remains available. The cloud edition uses Workers static assets, Cloudflare Access, private R2, D1, Queues and Python Containers. Uploading `static/` to Pages alone does not deploy analysis.
 
@@ -12,7 +44,7 @@ Workers Builds can build this Dockerfile directly from GitHub; local Docker is u
 2. Enable Workers Paid and R2 after the account owner confirms billing. Create D1 `courtiq`, private R2 `courtiq-private` and Queue `courtiq-analysis`; retain the D1 UUID.
 3. Choose/view the account’s `workers.dev` subdomain. The Worker name is `courtiq`, so the production origin is `https://courtiq.<account-subdomain>.workers.dev`; no purchased domain is required.
 4. Create a hostname-based Access application allowing only the intended user emails. Record the team domain and AUD. Create the more specific `/internal/storage/*` Bypass application described below.
-5. In Workers & Pages → Create application → GitHub, import the repository. Set Worker name `courtiq`, production branch `main`, root `/`, build command `npm ci --include=dev`, deploy command `npm run cloud:deploy:git`.
+5. In Workers & Pages → Create application → GitHub, import the repository. Set Worker name `courtiq`, production branch `main`, root `/`, build command `npm ci --include=dev`, deploy command `npm run cloud:deploy:full`.
 6. Set these under Settings → Builds → Variables and secrets before retrying the initial build:
 
 | Build variable | Value |

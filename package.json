@@ -10,7 +10,10 @@
     "cloud:seed": "node cloud/seed.mjs",
     "cloud:configure": "node cloud/configure.mjs",
     "test:integration": "node cloud/integration.mjs",
-    "cloud:deploy:git": "node cloud/git-build.mjs"
+    "build:site": "node build-site.mjs",
+    "site:dev": "npm run build:site && wrangler dev --config wrangler.site.jsonc",
+    "cloud:deploy:git": "npm run build:site && wrangler deploy --config wrangler.site.jsonc",
+    "cloud:deploy:full": "node cloud/git-build.mjs"
   },
   "dependencies": {
     "@cloudflare/containers": "0.3.7",

@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 MPLBACKEND=Agg \
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg libglib2.0-0 libgl1 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY requirements.txt ./
+COPY requirements/analysis.txt ./requirements.txt
 # CPU wheels avoid installing the CUDA runtime in a CPU container.
 RUN pip install --index-url https://download.pytorch.org/whl/cpu torch==2.12.1 torchvision==0.27.1 \
     && pip install -r requirements.txt

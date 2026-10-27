@@ -24,6 +24,7 @@ vendor/**/.git/
 
 # Cloudflare local state and credentials
 node_modules/
+dist/
 .wrangler/
 .dev.vars
 .dev.vars.*

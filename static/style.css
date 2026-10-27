@@ -14,6 +14,28 @@
   color: var(--text);
   color-scheme: light;
 }
+
+/* Published results use the same charts, with no upload or analysis service. */
+html[data-mode="showcase"] :is(#import-button,#rail-import,#empty-import,#research-import,#city-import,#first-venue-import,#example-button,#video-tabs,#adjust-button,#setup-controls,#log-panel,#save-notes,#export-video,#account-menu,#import-dialog,#research-evaluation-panel,#research-cohort,#research-tabs,#archive-status),
+html[data-mode="showcase"] .workflow,
+html[data-mode="showcase"] [data-tab="notes"] {display:none!important}
+html[data-mode="showcase"] #video-stage {background:#effaf5;aspect-ratio:auto;display:block}
+html[data-mode="showcase"] .runtime-pill {color:#087c69;background:#e6f7ef;border-color:#c4e9d9}
+html[data-mode="showcase"] .research-controls {grid-template-columns:minmax(180px,1fr) minmax(130px,.6fr) auto auto}
+#trajectory-replay {width:100%;padding:20px 22px;background:linear-gradient(135deg,#f2fbf6,#eaf6fc)}
+.replay-heading {display:flex;justify-content:space-between;align-items:center;gap:10px}
+.replay-eyebrow {font-weight:650;color:#255d58;letter-spacing:.06em}
+#replay-canvas {display:block;width:100%;height:260px;margin:15px 0}
+.replay-legend {display:flex;align-items:center;flex-wrap:wrap;gap:16px;color:#607d80;font-size:11px}
+.replay-legend>span {display:inline-flex;align-items:center;gap:6px}
+.replay-legend>span:last-child {margin-left:auto}
+.near-dot,.far-dot {width:8px;height:8px;display:inline-block;border-radius:50%;background:#0aa48e}
+.far-dot {background:#2468eb}
+.replay-controls {display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:14px;border-top:1px solid #cfe5e0}
+.replay-controls input {min-width:30px;flex:1;accent-color:#10a997;cursor:pointer}
+.replay-controls output {font:11px var(--mono);white-space:nowrap;color:#42667c}
+.replay-controls button {flex-shrink:0;background:#fff;color:#087e70;border:1px solid #cae6dd}
+@media(max-width:650px){#trajectory-replay{padding:16px 12px}#replay-canvas{height:190px}.replay-eyebrow{font-size:12px}.replay-legend{gap:10px}.replay-legend>span:last-child{width:100%;margin-left:0}.replay-controls{gap:6px}.replay-controls output{font-size:10px}html[data-mode="showcase"] .research-controls{grid-template-columns:1fr 1fr}}
 * { box-sizing: border-box; }
 body { margin: 0; background: radial-gradient(ellipse at 85% 0%, #e8f5ff88, transparent 45%), var(--bg); }
 button, input, select, textarea { font: inherit; }

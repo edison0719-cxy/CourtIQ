@@ -2,9 +2,30 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A workbench for fixed-camera badminton video analysis and statistical research, with local and authenticated Cloudflare modes: from calibrated movement trajectories to reproducible training comparisons. The interface supports Chinese and English. For the hosted edition, start with the [Cloudflare deployment guide](CLOUD_DEPLOY.md); the quick start below runs locally.
+A bilingual badminton movement and statistical research workbench. Analyze real recordings locally, then publish reviewed results as an interactive static website. The public edition needs no video upload service, inference server, login, database or model downloads. The complete local analysis workstation remains available.
 
-## Start the workbench
+## Publish the results website (default hosted edition)
+
+```sh
+npm ci --include=dev
+npm run build:site
+npm run site:dev
+```
+
+The site displays the real, precomputed five-second upstream example included in `published/`: interactive trajectory replay, heatmaps, spatial statistics, time-block bootstrap intervals, calibration and threshold sensitivity, and CSV/JSON/chart exports. The example is labeled and excluded from venue pilot counts. No student recordings or student performance claims are included. No original video or broadcast frames are published.
+
+Connect this repository to Cloudflare Workers Builds: branch `main`, root `/`, build command `npm ci --include=dev`, deploy command `npm run cloud:deploy:git`. The target is an assets-only Worker using `wrangler.site.jsonc`. No `COURTIQ_*` variables, Access signup, R2, D1, Queues, Containers or paid Workers plan are required by this configuration. Existing cloud secrets are never read or bundled by the static build. See the [deployment guide](CLOUD_DEPLOY.md).
+
+To publish a completed local run after reviewing publication rights and public metadata:
+
+```sh
+.venv/bin/python publish.py SESSION_ID --title "Public training title" --venue "Public venue label" --confirm-public
+npm run build:site
+```
+
+Replace `SESSION_ID` with the actual completed record ID. Commit the resulting `published/` files and push `main`. The exporter uses anonymous near/far player labels and excludes original videos, original filenames, frame images, private names, coach notes, manual assessments, logs and weights. Every exported metric remains tied to its actual run and trajectory hash. Publication makes the derived coordinates and statistics public; review them before committing. Local analysis and statistical export need the Python dependencies below; Cloudflare only packages the already-published files using Node.js.
+
+## Start the local analysis workbench
 
 For a fresh checkout, complete [Installation](#installation) and restore the files listed under [Source code and local assets](#source-code-and-local-assets) first.
 
@@ -26,7 +47,7 @@ You can also start the service from the project directory:
 4. Review the original or analyzed video, near/far player heatmaps, trajectories, convex hulls, zone occupancy, zone transitions, speed profiles, and observation quality.
 5. Export trajectory CSV, charts, and the analysis video. Download run parameters and methods from **Quality & methods**, and save manual observations under **Coach notes**.
 
-**Demo video** creates a clearly labeled record from the upstream public match sample. It is neither student footage nor simulated tracking data. Check its calibration before running it. A five-second segment was used for local end-to-end validation; that run is local data and is not distributed with this Git repository.
+**Demo video** creates a clearly labeled record from the upstream public match sample. It is neither student footage nor simulated tracking data. Check its calibration before running it. A five-second segment was used for local end-to-end validation; the source footage remains local; reviewed derived results from that run are included in `published/` for the static showcase.
 
 Reference corners for that specific upstream sample are `(352,342), (628,343), (944,527), (52,532)`. They do not apply to other recordings.
 
@@ -122,11 +143,11 @@ The following commands use macOS/Linux shell syntax. Create a separate environme
 
 ```sh
 python3.13 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -r requirements/analysis.txt
 .venv/bin/python app.py
 ```
 
-`requirements.txt` records the direct dependency versions used for validation. API tests additionally require `httpx`, installed with `.venv/bin/python -m pip install httpx`, and the upstream `short.mp4` for the related tests. JavaScript checks require Node.js. FFmpeg is an external executable and is not installed by pip requirements.
+`requirements/analysis.txt` records the direct dependency versions used for validation. API tests additionally require `httpx`, installed with `.venv/bin/python -m pip install httpx`, and the upstream `short.mp4` for the related tests. JavaScript checks require Node.js. FFmpeg is an external executable and is not installed by pip requirements.
 
 ## Validation
 
@@ -141,4 +162,4 @@ Encoded videos used by unit tests are temporary fixtures and never appear as tra
 
 ## Cloudflare edition
 
-Authenticated cloud deployment now includes resumable private uploads, D1 training records, queued CPU containers and durable R2 analysis artifacts. The local workstation remains available. See the [Cloudflare deployment guide](CLOUD_DEPLOY.md) ([中文](CLOUD_DEPLOY.zh-CN.md)) for configuration, validation and the remaining account/Docker prerequisites.
+The default deployment publishes static results only. The previous authenticated upload/inference backend remains optional under `npm run cloud:deploy:full` and requires separate paid resources and identity configuration. It is not used by the showcase. See the [Cloudflare deployment guide](CLOUD_DEPLOY.md) ([中文](CLOUD_DEPLOY.zh-CN.md)).

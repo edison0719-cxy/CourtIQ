@@ -2,7 +2,28 @@
 
 [English](README.md) | **简体中文**
 
-面向固定机位羽毛球录像的分析与统计研究工作台，支持本地与认证 Cloudflare 云端模式：从标定后的运动轨迹，到可复现的训练比较。支持中文 / English 界面。云端安装请从 [Cloudflare 部署指南](CLOUD_DEPLOY.zh-CN.md) 开始；下文快速启动运行本地版。
+面向羽毛球运动数据与统计研究的中英文工作台：在本地分析真实录像，将审核后的结果发布成可交互的静态网站。公开展示版不需要在线上传、推理服务器、登录、数据库或模型下载；完整的本地分析工作站继续保留。
+
+## 发布结果展示网站（默认上线方式）
+
+```sh
+npm ci --include=dev
+npm run build:site
+npm run site:dev
+```
+
+网站直接读取 `published/` 中的真实分析结果，支持轨迹时间回放、热力图、空间统计、时间块 Bootstrap 区间、标定与阈值敏感性分析，以及 CSV / JSON / 统计图下载。目前仅发布上游真实比赛样本的 5 秒分析结果，保留示例标签，不计入场馆试点成果；不包含学生视频、学生训练成绩或原始转播画面。
+
+Cloudflare Workers Builds 连接本仓库：分支 `main`，根目录 `/`，Build command 为 `npm ci --include=dev`，Deploy command 为 `npm run cloud:deploy:git`。该命令使用 `wrangler.site.jsonc` 仅部署静态资源，不需要 `COURTIQ_*` 变量、Access、R2、D1、Queues、Containers 或 Workers Paid；静态打包不会读取原有密钥。详见 [部署指南](CLOUD_DEPLOY.zh-CN.md)。
+
+学生视频在本地完成分析，审核公开权限和内容后发布对应结果：
+
+```sh
+.venv/bin/python publish.py 实际训练记录ID --title "公开训练名称" --venue "公开场馆名称" --confirm-public
+npm run build:site
+```
+
+将生成的 `published/` 文件提交到 Git 并推送 `main` 即可更新。导出器使用匿名近端 / 远端球员标签，不导出原始视频、原文件名、视频帧、私人姓名、教练备注、人工成绩记录、日志或模型。每份结果保留真实运行编号和轨迹指纹。发布后轨迹及统计数据可被公开读取，提交前需审核；本地计算依赖 Python，Cloudflare 打包只需要 Node.js。
 
 ## 启动
 
@@ -26,7 +47,7 @@
 4. 完成后查看原片/分析视频、近端/远端热图、轨迹、凸包、区域分布、区域转移、速度曲线及观测质量。
 5. 下载轨迹 CSV、统计图和分析视频；在“质控与方法”下载参数与方法清单；在“教练记录”保存人工观察。
 
-“示例视频”会创建一条标明来源的公开比赛样本记录，**不是学生视频或模拟数据**。仍需核对四角。本地端到端验证使用过一条 5 秒的真实推理片段；该运行结果属于本机数据，不随 Git 仓库分发。上游样本的参考角点为 `(352,342), (628,343), (944,527), (52,532)`，只适用于这一个样本，不能用于其他录像。
+“示例视频”会创建一条标明来源的公开比赛样本记录，**不是学生视频或模拟数据**。仍需核对四角。本地端到端验证使用过一条 5 秒的真实推理片段；原视频继续保留在本机，该运行审核后的衍生结果已放入 `published/`，用于静态展示。上游样本的参考角点为 `(352,342), (628,343), (944,527), (52,532)`，只适用于这一个样本，不能用于其他录像。
 
 ## 统计研究与专项评估
 
@@ -120,11 +141,11 @@ cd CourtIQ
 
 ```sh
 python3.13 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -r requirements/analysis.txt
 .venv/bin/python app.py
 ```
 
-`requirements.txt` 记录本次验证的直接依赖版本。API 测试额外需要 `httpx`，可用 `.venv/bin/python -m pip install httpx` 安装；运行相关接口测试前还需准备上述 `short.mp4`。JavaScript 检查需要 Node.js。FFmpeg 是外部命令，不包含在 pip 依赖中。
+`requirements/analysis.txt` 记录本次验证的直接依赖版本。API 测试额外需要 `httpx`，可用 `.venv/bin/python -m pip install httpx` 安装；运行相关接口测试前还需准备上述 `short.mp4`。JavaScript 检查需要 Node.js。FFmpeg 是外部命令，不包含在 pip 依赖中。
 
 ## 验证
 
@@ -139,4 +160,4 @@ node --test tests/*.test.cjs
 
 ## Cloudflare 云端版
 
-支持账号登录、私有录像分片续传、D1 训练档案、排队运行的 CPU 分析容器和 R2 结果持久化，同时保留本地工作站。配置、验收及尚需完成的账号/Docker 准备见 [Cloudflare 部署指南](CLOUD_DEPLOY.zh-CN.md)（[English](CLOUD_DEPLOY.md)）。
+默认上线方式为静态结果展示。原有认证云端上传 / 推理后端作为可选功能保留，命令改为 `npm run cloud:deploy:full`，需要另行准备身份认证和付费资源；展示版不调用该后端。详见 [Cloudflare 部署指南](CLOUD_DEPLOY.zh-CN.md)（[English](CLOUD_DEPLOY.md)）。

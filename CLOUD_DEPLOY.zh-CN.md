@@ -1,6 +1,43 @@
-# CourtIQ · Cloudflare 部署
+# CourtIQ · 静态结果网站部署
 
 [English](CLOUD_DEPLOY.md) · [项目说明](README.zh-CN.md)
+
+默认方案：本地分析，结果上线。网站直接读取已发布的真实 JSON / CSV / 图表，支持双语、交互图表和轨迹回放，不接收录像，不调用在线模型。无需 Zero Trust、Access、支付信息或以下完整云端版的资源。
+
+## 使用现有 GitHub 连接
+
+| 设置 | 值 |
+| --- | --- |
+| Git 仓库 | `edison0719-cxy/CourtIQ` |
+| 分支 / 根目录 | `main` / `/` |
+| Build command | `npm ci --include=dev` |
+| Deploy command | `npm run cloud:deploy:git` |
+
+1. 将最新代码推送到 GitHub；Cloudflare 自动构建时会使用新的静态部署命令。
+2. 旧的 `COURTIQ_*` 构建变量均不再需要，可以删除；`SKIP_DEPENDENCY_INSTALL=1` 可保留，显式 npm 构建仍会安装所需 JavaScript 工具。根目录已移除 Python 依赖入口，避免自动安装模型依赖。
+3. 关闭 Preview builds，保存设置，在 Builds 中重试最新提交。
+4. 构建成功后访问 **https://courtiq.edisonruby419.workers.dev**。`wrangler.site.jsonc` 会启用正式 workers.dev 地址，不需要购买域名。如果之前单独创建过该主机名的 Access 应用，需要在本人控制台移除该展示站的访问限制。
+
+不需要 D1 ID、Access Team Domain、AUD、内部密钥、模型上传或本机 Docker。已创建的数据库保留不动。部署配置只有静态资源，没有在线计算或存储绑定；[Cloudflare 官方说明](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)静态资源请求免费，仍受文件数量、单文件大小和构建配额限制。
+
+## 本地验证及发布新结果
+
+```sh
+npm ci --include=dev
+npm test
+npm run build:site
+npm run site:dev
+```
+
+网站包输出到 `dist/`（不提交 Git）。部署过程不读取 `.env*`、`.dev.vars`、`data/` 或模型目录。当前 `published/` 只包含标记为公开示例的真实 5 秒分析，不代表学生训练效果。
+
+学生录像在本地完成分析后，按 README 的 `publish.py` 命令显式导出。导出数据经过匿名化，仍须审核公开权限；推送后自动更新网站。原始视频继续留在本地。展示版暂不开放组间比较编辑和人工成绩录入，这些工作在本地工作站完成。
+
+---
+
+# 可选附录：完整云端上传与推理（当前不部署）
+
+以下内容仅适用于将来明确启用在线处理时，包含付费资源及登录设置。静态网站请停留在以上步骤。
 
 此版本保留 `python app.py` 本地工作站，并增加完整云端入口。仅把 `static/` 放到 Pages 无法运行视频分析。云端使用 Workers 静态资源、Access 登录、私有 R2、D1、Queues 和运行 Python 的 Containers。
 
@@ -12,7 +49,7 @@ Cloudflare 的 Workers Builds 可以直接从 GitHub 构建本项目的 Docker �
 2. 在 Cloudflare 账号中开通 Workers Paid、启用 R2。付费确认由账号持有人完成。创建 D1 数据库 `courtiq`、私有 R2 桶 `courtiq-private` 和 Queue `courtiq-analysis`，记录 D1 UUID。
 3. 在 Workers & Pages 页面查看/设置账号的 `workers.dev` 子域名。应用名使用 `courtiq`，正式网址为该账号下的 `courtiq.<账号子域名>.workers.dev`，无需购买域名。
 4. 配置 Zero Trust：为这个正式主机名建立仅允许本人/教练邮箱的 Access 应用，复制团队域名与 AUD。另建同主机、更具体的 `/internal/storage/*` Bypass 应用，具体要求见下面“配置登录和容器回调”。
-5. 在 Workers & Pages → Create application → GitHub 导入 `edison0719-cxy/CourtIQ`，Worker 名 `courtiq`，生产分支 `main`，根目录为仓库根目录 `/`。Build command 填 `npm ci --include=dev`；Deploy command 填 `npm run cloud:deploy:git`。
+5. 在 Workers & Pages → Create application → GitHub 导入 `edison0719-cxy/CourtIQ`，Worker 名 `courtiq`，生产分支 `main`，根目录为仓库根目录 `/`。Build command 填 `npm ci --include=dev`；Deploy command 填 `npm run cloud:deploy:full`。
 6. 在构建设置（Settings → Builds → Variables and secrets）填写下面五项，最后一项以 Secret 保存。若首次构建先启动并报告缺少配置，补齐后重试即可；缺少配置时部署脚本会直接停止。
 
 | 构建变量 | 内容 |

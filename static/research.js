@@ -26,6 +26,8 @@
   $('research-session').innerHTML=records.map(s=>`<option value="${s.id}">${escapeHTML(sessionTitle(s))}</option>`).join('');
   if(selectedId)$('research-session').value=selectedId;
   const current=records.find(s=>s.id===selectedId);
+  for(const option of $('research-player').options)option.disabled=showcase&&!!current&&!current.players.includes(option.value);
+  if(showcase&&current&&!current.players.includes($('research-player').value))$('research-player').value=current.players[0];
   const key=current?`${current.id}:${current.run_id}:${$('research-player').value}`:'';
   if(report&&`${report.source.session_id}:${report.source.run_id}:${report.player}`!==key){report=null;$('research-results').hidden=true;}
   if(calculating&&pendingKey!==key){++reportRequest;calculating=false;pendingKey='';}
@@ -41,7 +43,7 @@
   if(!id)return;
   const token=++reportRequest;pendingKey=`${id}:${complete().find(s=>s.id===id)?.run_id}:${p}`;report=null;calculating=true;showError('');$('research-results').hidden=true;sources();buttons();
   try {
-   const data=await api(`/api/sessions/${id}/statistics?player=${p}`);
+   const data=await readStatistics(id,p);
    if(token!==reportRequest)return;
    report=data;populateEvaluation();renderSingle();
   }catch(e){if(token===reportRequest)showError(e.message);}
@@ -87,6 +89,7 @@
   return data.records.every(r=>{const current=records.find(s=>s.id===r.session_id);return current&&current.run_id===r.run_id&&(!r.evaluation||current.evaluations?.[r.player]?.updated_at===r.evaluation.updated_at);});
  }
  function renderStudy(){
+  if(showcase)return;
   const records=training(),paired=$('study-design').value==='paired';
   if(comparison&&!comparisonIsCurrent(comparison))invalidateStudy();
   if(!records.length){
@@ -194,7 +197,7 @@
   if(report?.source.session_id===current.id&&report.source.run_id===current.run_id){renderSingle();buttons();}else if(!calculating)calculate();
  }
  window.CourtIQResearch={
-  async enter(){const token=++sourceRequest;try{const records=await api('/api/sessions');if(token!==sourceRequest)return;sessions=records;renderRecent();sync();}catch(e){if(token===sourceRequest)showError(e.message);}},
+  async enter(){const token=++sourceRequest;try{const records=await readSessions();if(token!==sourceRequest)return;sessions=records;renderRecent();sync();}catch(e){if(token===sourceRequest)showError(e.message);}},
   sync,
   translate(){sources();renderStudy();renderSingle();renderComparison();if(settings.question===undefined)$('research-question').value=t('标定误差与时间相关性如何影响训练指标？');buttons();},
   draw,

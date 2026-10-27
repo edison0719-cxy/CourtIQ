@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 if [[ ! -x .venv/bin/python ]]; then
-  echo '请先按 README.md 创建 Python 环境并安装 requirements.txt。'
+  echo '请先按 README.md 创建 Python 环境并安装 requirements/analysis.txt。'
   read -r -p '按回车关闭…'
   exit 1
 fi

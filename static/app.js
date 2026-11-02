@@ -30,7 +30,7 @@ function icons(root=document) { root.querySelectorAll('i[data-icon]').forEach(i=
 icons();
 const escapeHTML = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let session=null, sessions=[], result=null, runtime=null, points=[], page='workspace', view='original', map='heatmap', tab='distribution', resultKey='', toastTimer;
-let animationKey='',animationURL='',animationRequest=0,animationController=null;
+let animationKey='',animationRequest=0;
 const busy = ()=>session&&['queued','running'].includes(session.status);
 const sessionFile=(id,name)=>showcase?published.file(id,name==='preview.jpg'?'preview.svg':name):`/api/sessions/${id}/files/${name}`;
 const fileURL=name=>sessionFile(session.id,name);
@@ -200,25 +200,27 @@ function renderVideo() {
  }
 }
 function releaseAnimation(){
- ++animationRequest;animationController?.abort();animationController=null;animationKey='';
- const video=$('match-video');video.pause();video.removeAttribute('src');video.load();
- if(animationURL)URL.revokeObjectURL(animationURL);animationURL='';
+ ++animationRequest;animationKey='';
+ const video=$('match-video');video.onloadedmetadata=null;video.onerror=null;
+ video.pause();video.removeAttribute('src');video.load();
 }
-async function loadPublishedVideo(record,media,cursor){
+function loadPublishedVideo(record,media,cursor){
  releaseAnimation();const token=animationRequest;
- animationKey=record.id+media.sha256;animationController=new AbortController();
- try{
-  // Short exported MP4s are loaded as a Blob so seeking also works on static hosts without Range support.
-  const response=await fetch(sessionFile(record.id,media.file),{signal:animationController.signal});
-  if(!response.ok)throw new Error(t('视频暂不可用，请查看交互轨迹。'));
-  const blob=await response.blob();if(token!==animationRequest)return;
-  animationURL=URL.createObjectURL(blob);
-  const video=$('match-video');video.onloadedmetadata=()=>{if(token===animationRequest){video.currentTime=cursor<video.duration?cursor:0;if(!video.hidden)replayTime=video.currentTime;}};
-  video.src=animationURL;video.load();
- }catch(e){
-  if(token!==animationRequest||e.name==='AbortError')return;
+ error('');
+ animationKey=record.id+media.sha256;
+ const video=$('match-video');
+ video.onloadedmetadata=()=>{
+  if(token!==animationRequest)return;
+  const position=cursor<video.duration?cursor:0;
+  if(position>0)video.currentTime=position;
+  if(!video.hidden)replayTime=position;
+ };
+ video.onerror=()=>{
+  if(token!==animationRequest||!video.error)return;
   animationKey='';view='trajectory';renderVideo();renderResults();error(t('视频暂不可用，请查看交互轨迹。'));
- }finally{if(token===animationRequest)animationController=null;}
+ };
+ // Give the browser the fast-start MP4 immediately; do not wait for a full Blob download.
+ video.src=sessionFile(record.id,media.file);video.load();
 }
 window.addEventListener('pagehide',event=>{if(showcase&&!event.persisted)releaseAnimation();});
 document.querySelectorAll('#video-tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.view;renderVideo();});

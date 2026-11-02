@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "player": "near",
+  "seed": 20261026,
+  "analysis_duration_s": 9.366666666666667,
+  "valid_observations": 281,
+  "source_frames": 281,
+  "observation_rate": 1.0,
+  "motion_pairs": 280,
+  "distance_m": 13.675583587428804,
+  "observed_motion_s": 9.333333333333334,
+  "mean_speed_mps": 1.465241098653086,
+  "hull_area_m2": 2.640416801857782,
+  "speed_quantiles": {
+    "p25": 0.7017138443322939,
+    "p50": 1.1763241297865685,
+    "p75": 2.05391290856005,
+    "p90": 2.9323962866853397,
+    "p95": 3.715162398348895
+  },
+  "zone_entropy_bits": 2.1773518878236047,
+  "normalized_zone_entropy": 0.8423146901419902,
+  "position_covariance_m2": [
+    [
+      0.07831910107405271,
+      0.00888699696593378
+    ],
+    [
+      0.00888699696593378,
+      1.4345163834189536
+    ]
+  ],
+  "histogram": {
+    "edges": [
+      0.0,
+      0.5,
+      1.0,
+      1.5,
+      2.0,
+      2.5,
+      3.0,
+      3.5,
+      4.0,
+      4.5,
+      5.0,
+      5.5,
+      6.0,
+      6.5,
+      7.0,
+      7.5,
+      8.0
+    ],
+    "counts": [
+      47,
+      71,
+      56,
+      30,
+      36,
+      13,
+      10,
+      5,
+      5,
+      1,
+      4,
+      2,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "block_bootstrap": [
+    {
+      "block_seconds": 0.5,
+      "blocks": 19,
+      "estimate": 1.465241098653086,
+      "ci95": [
+        1.18080696239347,
+        1.8070760272045003
+      ],
+      "resamples": 2000,
+      "seed": 20261026
+    },
+    {
+      "block_seconds": 1,
+      "blocks": 10,
+      "estimate": 1.465241098653086,
+      "ci95": [
+        1.157923068992983,
+        1.790991576706235
+      ],
+      "resamples": 2000,
+      "seed": 20261026
+    },
+    {
+      "block_seconds": 2,
+      "blocks": 5,
+      "estimate": 1.465241098653086,
+      "ci95": [
+        1.0943565928738723,
+        1.8353985917995057
+      ],
+      "resamples": 2000,
+      "seed": 20261026
+    }
+  ],
+  "threshold_sensitivity": [
+    {
+      "speed_limit_mps": 6,
+      "distance_m": 13.675583587428804,
+      "mean_speed_mps": 1.465241098653086,
+      "motion_pairs": 280
+    },
+    {
+      "speed_limit_mps": 8,
+      "distance_m": 13.675583587428804,
+      "mean_speed_mps": 1.465241098653086,
+      "motion_pairs": 280
+    },
+    {
+      "speed_limit_mps": 10,
+      "distance_m": 13.675583587428804,
+      "mean_speed_mps": 1.465241098653086,
+      "motion_pairs": 280
+    }
+  ],
+  "calibration_sensitivity": [
+    {
+      "sigma_px": 0,
+      "draws": 200,
+      "sampled_positions": 281,
+      "mean_displacement_m": 2.954386563530887e-15,
+      "displacement_p95_m": 5.4025784115714076e-15,
+      "zone_change_rate": 0.0
+    },
+    {
+      "sigma_px": 1,
+      "draws": 200,
+      "sampled_positions": 281,
+      "mean_displacement_m": 0.016407196144868224,
+      "displacement_p95_m": 0.03461270774844935,
+      "zone_change_rate": 0.02065836298932384
+    },
+    {
+      "sigma_px": 2,
+      "draws": 200,
+      "sampled_positions": 281,
+      "mean_displacement_m": 0.03280627766974832,
+      "displacement_p95_m": 0.06949312253890447,
+      "zone_change_rate": 0.039644128113879004
+    },
+    {
+      "sigma_px": 5,
+      "draws": 200,
+      "sampled_positions": 281,
+      "mean_displacement_m": 0.08198745001196976,
+      "displacement_p95_m": 0.17371471942641767,
+      "zone_change_rate": 0.10560498220640571
+    }
+  ],
+  "flags": [
+    "short_clip"
+  ],
+  "method": {
+    "motion_speed_limit_mps": 8,
+    "max_pair_gap_s": 0.2,
+    "bootstrap": "non-overlapping time-block percentile bootstrap of sum(distance)/sum(observed time)",
+    "bootstrap_assumption": "Blocks approximate independent, similarly distributed motion segments. Check block-size sensitivity; missing motion is not recovered.",
+    "calibration": "Independent N(0,sigma_px²) corner-coordinate perturbations; conditional on fixed detections. Sensitivity scenarios, not measured errors or confidence intervals.",
+    "entropy": "Shannon entropy of six empirical half-court zones, in bits; not a performance score.",
+    "references": [
+      "https://www.stat.cmu.edu/~cshalizi/uADA/16/lectures/26.pdf",
+      "https://docs.opencv.org/4.x/da/d54/group__imgproc__transform.html"
+    ]
+  },
+  "evaluation": null,
+  "source": {
+    "session_id": "84c0c2fb33d94dba9e996cef8e166e2e",
+    "run_id": "65796aa269924e5ba5edfcf2c2da6ea0",
+    "title": "学生训练 006 | Training rally 006",
+    "is_example": false,
+    "source_sha256": "47d888b3d4a9eecf13cb5cb14fafc69a511235b59143655a955ffe54713b310e",
+    "player_name": "近端球员",
+    "trajectory_sha256": "61e17baa77e8398a8656a6c28d15c72e88ad86c816c8b09a24911d7f9113b4c5",
+    "manifest": {
+      "calibration": [
+        [
+          841.0,
+          307.0
+        ],
+        [
+          1165.0,
+          300.0
+        ],
+        [
+          1900.0,
+          1015.0
+        ],
+        [
+          0.0,
+          1035.0
+        ]
+      ],
+      "options": {
+        "shuttle": false,
+        "seconds": 0,
+        "threshold": 0.15,
+        "device": "auto"
+      },
+      "coordinate_system": "full court: 6.1 m × 13.4 m; origin at far-left baseline corner",
+      "sources": [
+        {
+          "name": "badminton-pipeline-repro",
+          "url": "https://github.com/ychenfen/badminton-pipeline-repro"
+        },
+        {
+          "name": "Badminton_Analytics_Project",
+          "url": "https://github.com/muhammadyasin79/Badminton_Analytics_Project"
+        }
+      ],
+      "methodology": [
+        "Only detector observations inside the calibrated court are used; optical-flow/held positions are excluded.",
+        "Distance sums consecutive observations only. Gaps >0.2 s and speeds >8 m/s are excluded; the 8 m/s threshold is a quality filter, not a physiological finding.",
+        "Zones are relative to each player half: Front is nearest the net. Left/right follow the camera view.",
+        "Transition probabilities are empirical consecutive-frame frequencies including self-transitions; they depend on video frame rate.",
+        "Hull is the convex envelope of observed positions, not instantaneous reachability or tactical control.",
+        "Mean position and covariance describe the selected clip; they are not recovery or optimal-position estimates.",
+        "Video perspective, ankle localization, occlusion and identity switches can bias all estimates. Manual review is required."
+      ],
+      "session_id": "84c0c2fb33d94dba9e996cef8e166e2e",
+      "run_id": "65796aa269924e5ba5edfcf2c2da6ea0",
+      "trajectory_sha256": "61e17baa77e8398a8656a6c28d15c72e88ad86c816c8b09a24911d7f9113b4c5",
+      "source_sha256": "47d888b3d4a9eecf13cb5cb14fafc69a511235b59143655a955ffe54713b310e",
+      "upstream": {
+        "main_repository": "https://github.com/ychenfen/badminton-pipeline-repro",
+        "main_commit": "d86ad18f43b4671fcb191c9876e167cce806ccf8",
+        "analytics_repository": "https://github.com/muhammadyasin79/Badminton_Analytics_Project",
+        "analytics_source": "GitHub main archive downloaded 2026-10-26",
+        "analytics_notebook_sha256": "a09b1307e51a2b5cd615853c3e7b38c315dc1d3e245cc8b0b9fa50907174da1d",
+        "weights_sha256": {
+          "TrackNet_best.pt": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
+          "yolov8s-pose.pt": "234314cd8baf62616791aceb9ea6ad5c19f26cf6c0d8f3a1bfce1e23b186cfb3"
+        }
+      }
+    }
+  }
+}

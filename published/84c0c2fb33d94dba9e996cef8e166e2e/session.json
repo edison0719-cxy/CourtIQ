@@ -1,0 +1,79 @@
+{
+  "id": "84c0c2fb33d94dba9e996cef8e166e2e",
+  "run_id": "65796aa269924e5ba5edfcf2c2da6ea0",
+  "title": "学生训练 006 | Training rally 006",
+  "venue": "",
+  "near_name": "近端球员",
+  "far_name": "远端球员",
+  "created_at": "2026-10-30T17:11:03.601289+00:00",
+  "status": "completed",
+  "stage": "分析完成",
+  "is_example": false,
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30.0,
+    "frames": 281,
+    "duration_s": 9.366666666666667
+  },
+  "options": {
+    "seconds": 0
+  },
+  "calibration": [
+    [
+      841.0,
+      307.0
+    ],
+    [
+      1165.0,
+      300.0
+    ],
+    [
+      1900.0,
+      1015.0
+    ],
+    [
+      0.0,
+      1035.0
+    ]
+  ],
+  "players": [
+    "near"
+  ],
+  "animation": {
+    "file": "trajectory.mp4",
+    "poster": "animation-poster.jpg",
+    "sha256": "977f788a4dc1cee8547b3843e34f29e6bebaf5a1a68fc1f5fd5ded3591c59720",
+    "poster_sha256": "9dc4029ea98cec644d3f98689619e0f063e53b98c8c5470bc38f63ac3f89c395",
+    "trajectory_sha256": "61e17baa77e8398a8656a6c28d15c72e88ad86c816c8b09a24911d7f9113b4c5",
+    "run_id": "65796aa269924e5ba5edfcf2c2da6ea0",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "duration_s": 9.366666666666667
+  },
+  "videos": {
+    "original": {
+      "file": "original.mp4",
+      "poster": "original-poster.jpg",
+      "sha256": "47d888b3d4a9eecf13cb5cb14fafc69a511235b59143655a955ffe54713b310e",
+      "poster_sha256": "8931f25194eb246650b4791914144714a454c2b99e79206caa00c79200ee890f",
+      "source_sha256": "47d888b3d4a9eecf13cb5cb14fafc69a511235b59143655a955ffe54713b310e",
+      "run_id": "65796aa269924e5ba5edfcf2c2da6ea0",
+      "duration_s": 9.38,
+      "width": 1920,
+      "height": 1080
+    },
+    "analysis": {
+      "file": "analysis.mp4",
+      "poster": "analysis-poster.jpg",
+      "sha256": "a19b59fd7d566b81ae91cd18fc0c69b0d680311114f35fc7b3b8dcd090791e8f",
+      "poster_sha256": "29f9e9e4e9a2c6b44f61b3bfdbe08feb5e61f167907438fd4085c5e8639b8bf0",
+      "source_sha256": "47d888b3d4a9eecf13cb5cb14fafc69a511235b59143655a955ffe54713b310e",
+      "run_id": "65796aa269924e5ba5edfcf2c2da6ea0",
+      "duration_s": 9.366667,
+      "width": 1920,
+      "height": 1080
+    }
+  }
+}

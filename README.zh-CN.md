@@ -12,7 +12,7 @@ npm run build:site
 npm run site:dev
 ```
 
-网站直接读取 `published/` 中的真实分析结果，支持已生成动画视频播放 / 下载、交互轨迹回放、热力图、空间统计、时间块 Bootstrap 区间、标定与阈值敏感性分析，以及 CSV / JSON / 统计图下载。当前示例包含经明确确认可公开的 30 秒比赛原片、5 秒分析叠加视频及轨迹动画；统计只覆盖前 5 秒。保留示例标签，不计入场馆试点成果，不代表学生视频或学生训练成绩。
+网站直接读取 `published/` 中的真实分析结果，支持视频与轨迹动画播放 / 下载、交互轨迹回放、热力图、空间统计、时间块 Bootstrap 区间、标定与阈值敏感性分析，以及 CSV / JSON / 统计图下载。已发布学生训练回合 006、009、014，每段约 9–14 秒，包含训练原片、完整球员追踪叠加视频和全片移动统计；这些数据描述球员位置与移动，不代表羽毛球轨迹或训练提升的验证结果。原有公开比赛样本继续保留：30 秒原片、5 秒分析叠加视频及轨迹动画，统计只覆盖前 5 秒，并保留示例标签，不计入场馆试点成果。
 
 Cloudflare Workers Builds 连接本仓库：分支 `main`，根目录 `/`，Build command 为 `npm ci --include=dev`，Deploy command 为 `npm run cloud:deploy:git`。该命令使用 `wrangler.site.jsonc` 仅部署静态资源，不需要 `COURTIQ_*` 变量、Access、R2、D1、Queues、Containers 或 Workers Paid；静态打包不会读取原有密钥。详见 [部署指南](CLOUD_DEPLOY.zh-CN.md)。
 

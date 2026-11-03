@@ -23,7 +23,7 @@
    return catalog;
   };
   function file(id,name){
-   if(!/^[a-f0-9]{32}$/.test(id)||!['session.json','summary.json','manifest.json','players.csv','analytics.png','preview.svg','statistics-near.json','statistics-far.json','trajectory.mp4','animation-poster.jpg','original.mp4','original-poster.jpg','analysis.mp4','analysis-poster.jpg'].includes(name))throw new Error('无效的数据文件。');
+   if(!/^[a-f0-9]{32}$/.test(id)||!['session.json','summary.json','manifest.json','players.csv','shuttle.csv','analytics.png','preview.svg','statistics-near.json','statistics-far.json','trajectory.mp4','animation-poster.jpg','original.mp4','original-poster.jpg','analysis.mp4','analysis-poster.jpg'].includes(name))throw new Error('无效的数据文件。');
    return `/results/${id}/${name}`;
   }
   return {
@@ -39,7 +39,13 @@
   for(const point of trajectory){if(point[1]>time)break;position=point;}
   return position&&time-position[1]<=maxAge?position:null;
  }
- const exported={createReader,positionAt};
+ function heatColor(value,max){
+  if(!Number.isFinite(value)||!Number.isFinite(max)||value<=0||max<=0)return null;
+  const stops=[[36,84,220],[34,197,216],[255,215,74],[230,53,66]];
+  const scaled=Math.min(1,value/max)*3,i=Math.min(2,Math.floor(scaled)),f=scaled-i;
+  return stops[i].map((v,j)=>Math.round(v+(stops[i+1][j]-v)*f));
+ }
+ const exported={createReader,positionAt,heatColor};
  if(typeof module==='object'&&module.exports)module.exports=exported;
  else root.CourtIQPublished=exported;
 })(typeof window==='object'?window:globalThis);

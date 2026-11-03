@@ -14,7 +14,7 @@ npm run site:dev
 
 网站直接读取 `published/` 中的真实分析结果，支持视频与轨迹动画播放 / 下载、交互轨迹回放、热力图、空间统计、时间块 Bootstrap 区间、标定与阈值敏感性分析，以及 CSV / JSON / 统计图下载。已发布学生训练回合 006、009、014，每段约 9–14 秒，包含训练原片、完整球员追踪叠加视频和全片移动统计；这些数据描述球员位置与移动，不代表羽毛球轨迹或训练提升的验证结果。原有公开比赛样本继续保留：30 秒原片、5 秒分析叠加视频及轨迹动画，统计只覆盖前 5 秒，并保留示例标签，不计入场馆试点成果。
 
-Cloudflare Workers Builds 连接本仓库：分支 `main`，根目录 `/`，Build command 为 `npm ci --include=dev`，Deploy command 为 `npm run cloud:deploy:git`。该命令使用 `wrangler.site.jsonc` 仅部署静态资源，不需要 `COURTIQ_*` 变量、Access、R2、D1、Queues、Containers 或 Workers Paid；静态打包不会读取原有密钥。详见 [部署指南](CLOUD_DEPLOY.zh-CN.md)。
+Cloudflare Workers Builds 连接本仓库：分支 `main`，根目录 `/`，Build command 为 `npm ci --include=dev`，Deploy command 为 `npm run cloud:deploy:git`。该命令使用 `wrangler.site.jsonc` 部署静态结果及用于精确跳转的视频分段传输处理器，不需要 `COURTIQ_*` 变量、Access、R2、D1、Queues、Containers 或 Workers Paid；静态打包不会读取原有密钥。详见 [部署指南](CLOUD_DEPLOY.zh-CN.md)。
 
 学生视频在本地完成分析，审核公开权限和内容后发布对应结果：
 
@@ -26,6 +26,8 @@ npm run build:site
 将生成的 `published/` 文件提交到 Git 并推送 `main` 即可更新。默认导出使用匿名近端 / 远端球员标签，不导出原始视频、原文件名、私人姓名、教练备注、人工成绩记录、日志或模型。审核公开权限后，可额外添加 `--videos`，显式发布原片、既有分析成片及各自封面。`--animation` 在本地用真实观测轨迹生成 720p H.264 动画及封面，不包含原始转播画面；省略该参数则只发布交互数据。每份结果和动画保留真实运行编号、轨迹与文件指纹。发布后轨迹及统计数据可被公开读取，提交前需审核；本地计算依赖 Python，Cloudflare 打包只需要 Node.js。
 
 ## 启动
+
+热力图采用蓝—青—黄—红色阶，峰值标注最高频格子占有效观测的比例，无观测格子保持空白。“球路与回合复盘”在原片／分析视频上显示原始球检测点，不跨缺帧连线；检测覆盖率不代表准确率。方向突变只作为候选击球。本机可逐帧标记击球、发球及回合起止，或确认／排除候选。仅将人工确认且位于已标记回合内的击球计入拍数、平均间隔。公开结果提供只读复盘及带指纹的球迹 CSV，不声称自动比分、落点或三维球速。
 
 首次安装请先完成下方“在新环境安装”，并准备“源码仓库与本机文件”列出的模型与示例文件。
 

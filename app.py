@@ -212,7 +212,38 @@ def notes(sid:str,body:Notes):return update_session(sid,notes=body.notes)
 def results(sid:str):
     s=read_session(sid)
     if s['status']!='completed' or not s['run_id']:raise HTTPException(404,'尚无已完成的分析结果。')
-    return json.loads((directory(sid)/'runs'/s['run_id']/'summary.json').read_text(encoding='utf-8'))
+    folder=directory(sid)/'runs'/s['run_id']
+    summary=json.loads((folder/'summary.json').read_text(encoding='utf-8'))
+    from shuttle import session_shuttle
+    summary['shuttle']=session_shuttle(folder,s,summary)
+    return summary
+
+
+class ReviewedEvent(BaseModel):
+    frame:int=Field(ge=0,strict=True)
+    kind:Literal['hit','serve','start','end']
+    status:Literal['confirmed','rejected']='confirmed'
+    player:Literal['near','far']|None=None
+
+
+class EventReview(BaseModel):
+    run_id:str=Field(pattern=r'^[a-f0-9]{32}$')
+    decisions:list[ReviewedEvent]=Field(max_length=5000)
+
+
+@app.put('/api/sessions/{sid}/events')
+def review_events(sid:str,body:EventReview):
+    from shuttle import session_shuttle,apply_review
+    with LOCK:
+        s,folder=completed_artifacts(sid)
+        if s['run_id']!=body.run_id:raise HTTPException(409,'分析记录已变化，请重新打开。')
+        summary=json.loads((folder/'summary.json').read_text())
+        raw_session={**s,'event_review':{}}
+        decisions=[item.model_dump() for item in body.decisions]
+        try:report=apply_review(session_shuttle(folder,raw_session,summary),decisions)
+        except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+        update_session(sid,event_review={'run_id':body.run_id,'decisions':decisions})
+        return report
 
 
 @app.get('/api/sessions/{sid}/log')

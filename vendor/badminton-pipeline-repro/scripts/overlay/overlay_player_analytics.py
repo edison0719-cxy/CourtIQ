@@ -302,6 +302,13 @@ def is_static_top_track(history, top_y, min_frames=42, top_zone_px=18, top_ratio
     return spread <= static_move_px
 
 
+def court_net_line(court_quad):
+    """Project the physical half-court line back into the camera image."""
+    unit_court = np.float32([[0, 0], [1, 0], [1, 1], [0, 1]])
+    to_image = cv2.getPerspectiveTransform(unit_court, np.asarray(court_quad, dtype=np.float32))
+    return cv2.perspectiveTransform(np.float32([[[0, .5], [1, .5]]]), to_image)[0]
+
+
 def assign_players(
     candidates,
     prev_near_pt,
@@ -335,8 +342,9 @@ def assign_players(
         return min(pool, key=lambda c: c["foot"][1])
 
     if has_side_line:
-        near_pool = [c for c in candidates_sorted if c["foot"][1] >= (side_line_y - side_band_px)]
-        far_pool = [c for c in candidates_sorted if c["foot"][1] <= (side_line_y + side_band_px)]
+        boundary = side_line_y if callable(side_line_y) else lambda x: side_line_y
+        near_pool = [c for c in candidates_sorted if c["foot"][1] >= (boundary(c["foot"][0]) - side_band_px)]
+        far_pool = [c for c in candidates_sorted if c["foot"][1] <= (boundary(c["foot"][0]) + side_band_px)]
 
         near_candidate = pick_with_history(near_pool, prev_near_id, prev_near_pt, prefer_max_y=True)
         far_candidate = pick_with_history(far_pool, prev_far_id, prev_far_pt, prefer_max_y=False)
@@ -867,9 +875,12 @@ def run(args):
         else:
             raise ValueError(ZH_ERR_COURT)
     player_filter_quad = build_player_filter_quad(court_quad, args.top_inner_ratio)
-    top_y = float(0.5 * (court_quad[0][1] + court_quad[1][1]))
-    bot_y = float(0.5 * (court_quad[2][1] + court_quad[3][1]))
-    midline_y_img = 0.5 * (top_y + bot_y)
+    top_y = float(.5 * (court_quad[0][1] + court_quad[1][1]))
+    net_left, net_right = court_net_line(court_quad)
+
+    def net_y_at_x(x):
+        return float(net_left[1] + (x - net_left[0]) *
+                     (net_right[1] - net_left[1]) / (net_right[0] - net_left[0]))
 
     if args.detect_on_court_roi:
         detect_x1, detect_y1, detect_x2, detect_y2 = build_detect_roi(
@@ -1030,7 +1041,7 @@ def run(args):
                         if kpts_conf is not None and idx < len(kpts_conf):
                             person_kconf = kpts_conf[idx]
 
-                    is_far_zone_hint = y2 <= (midline_y_img + args.far_zone_hint_margin)
+                    is_far_zone_hint = y2 <= (net_y_at_x((x1 + x2) * .5) + args.far_zone_hint_margin)
                     foot_x, foot_y = estimate_foot_point(
                         (x1, y1, x2, y2),
                         keypoints=person_kpts,
@@ -1076,7 +1087,7 @@ def run(args):
             prev_far_id,
             far_lock_max_jump=args.far_lock_max_jump,
             far_max_up_jump=args.far_max_up_jump,
-            side_line_y=midline_y_img,
+            side_line_y=net_y_at_x,
             side_band_px=args.side_band_px,
         )
         near_draw_pt = None

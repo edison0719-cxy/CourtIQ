@@ -10,7 +10,7 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
  const catalog=await readJSON(path.join(root,'published/catalog.json'));
  if(catalog.schema_version!==1||!catalog.sessions?.length)throw new Error('Publish at least one completed run before building.');
  const commonFiles=['session.json','summary.json','manifest.json','players.csv','analytics.png','preview.svg'];
- const filesFor=record=>[...commonFiles,...record.players.map(p=>`statistics-${p}.json`),...(record.animation?['trajectory.mp4','animation-poster.jpg']:[]),...['original','analysis'].flatMap(kind=>record.videos?.[kind]?[`${kind}.mp4`,`${kind}-poster.jpg`]:[])];
+ const filesFor=record=>[...commonFiles,...record.players.map(p=>`statistics-${p}.json`),...(record.shuttle?['shuttle.csv']:[]),...(record.animation?['trajectory.mp4','animation-poster.jpg']:[]),...['original','analysis'].flatMap(kind=>record.videos?.[kind]?[`${kind}.mp4`,`${kind}-poster.jpg`]:[])];
  const seen=new Set();
  const names=await readdir(path.join(root,'published'));
  if(names.some(name=>name!=='catalog.json'&&!catalog.sessions.some(s=>s.id===name)))throw new Error('Unexpected file in public catalog.');
@@ -53,6 +53,12 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
    }
   }
   const summary=await readJSON(path.join(folder,'summary.json'));
+  if(record.shuttle){
+   const digest=createHash('sha256').update(await readFile(path.join(folder,'shuttle.csv'))).digest('hex');
+   if(record.shuttle.file!=='shuttle.csv'||record.shuttle.run_id!==record.run_id||digest!==record.shuttle.sha256||digest!==summary.shuttle?.source.csv_sha256||digest!==manifest.shuttle?.csv_sha256)throw new Error('Shuttle source fingerprint mismatch.');
+   const inference=manifest.shuttle.inference;
+   if(inference?.origin==='supplementary_shuttle_pass'&&inference.input_sha256!==manifest.source_sha256)throw new Error('Supplementary shuttle pass belongs to another video.');
+  }
   if(Object.keys(summary.players).sort().join()!==[...record.players].sort().join())throw new Error('Published player list differs from the analysis.');
   for(const player of record.players){
    const report=await readJSON(path.join(folder,`statistics-${player}.json`));
@@ -61,7 +67,7 @@ export async function buildSite(root=path.dirname(fileURLToPath(import.meta.url)
  }
  const out=path.join(root,'dist');
  await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});
- for(const name of ['index.html','style.css','i18n.js','planning.js','published.js','app.js','research.js'])await cp(path.join(root,'static',name),path.join(out,name));
+ for(const name of ['index.html','style.css','i18n.js','planning.js','published.js','shuttle.js','app.js','research.js'])await cp(path.join(root,'static',name),path.join(out,name));
  const html=(await readFile(path.join(out,'index.html'),'utf8')).replace('<html lang="zh-CN">','<html lang="zh-CN" data-mode="showcase">').replace(/<script src="\/upload\.js[^>]*><\/script>/,'');
  await writeFile(path.join(out,'index.html'),html);
  await mkdir(path.join(out,'results'));

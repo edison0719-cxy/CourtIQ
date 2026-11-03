@@ -57,5 +57,12 @@
       "TrackNet_best.pt": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
       "yolov8s-pose.pt": "234314cd8baf62616791aceb9ea6ad5c19f26cf6c0d8f3a1bfce1e23b186cfb3"
     }
+  },
+  "shuttle": {
+    "fps": 21.0,
+    "frames": 105,
+    "width": 960,
+    "height": 544,
+    "csv_sha256": "a8664922f71eb40fffae5596b3ec6a2bf7856a497e2d64d8ebb9d3917e704bcd"
   }
 }

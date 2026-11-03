@@ -3393,5 +3393,153 @@
     "Hull is the convex envelope of observed positions, not instantaneous reachability or tactical control.",
     "Mean position and covariance describe the selected clip; they are not recovery or optimal-position estimates.",
     "Video perspective, ankle localization, occlusion and identity switches can bias all estimates. Manual review is required."
-  ]
+  ],
+  "shuttle": {
+    "schema_version": 1,
+    "status": "sparse",
+    "valid_observations": 18,
+    "observation_rate": 0.06405693950177936,
+    "trajectory": [
+      [
+        31,
+        1.0333333333333334,
+        570.0,
+        487.0
+      ],
+      [
+        76,
+        2.533333333333333,
+        1537.0,
+        330.0
+      ],
+      [
+        77,
+        2.566666666666667,
+        1537.0,
+        330.0
+      ],
+      [
+        79,
+        2.6333333333333333,
+        1537.0,
+        330.0
+      ],
+      [
+        99,
+        3.3,
+        1023.0,
+        397.0
+      ],
+      [
+        132,
+        4.4,
+        915.0,
+        468.0
+      ],
+      [
+        135,
+        4.5,
+        915.0,
+        468.0
+      ],
+      [
+        136,
+        4.533333333333333,
+        948.0,
+        495.0
+      ],
+      [
+        144,
+        4.8,
+        926.0,
+        648.0
+      ],
+      [
+        156,
+        5.2,
+        922.0,
+        615.0
+      ],
+      [
+        157,
+        5.233333333333333,
+        922.0,
+        615.0
+      ],
+      [
+        158,
+        5.266666666666667,
+        915.0,
+        607.0
+      ],
+      [
+        159,
+        5.3,
+        922.0,
+        611.0
+      ],
+      [
+        160,
+        5.333333333333333,
+        930.0,
+        588.0
+      ],
+      [
+        161,
+        5.366666666666666,
+        933.0,
+        585.0
+      ],
+      [
+        162,
+        5.4,
+        933.0,
+        588.0
+      ],
+      [
+        163,
+        5.433333333333334,
+        930.0,
+        585.0
+      ],
+      [
+        179,
+        5.966666666666667,
+        945.0,
+        513.0
+      ]
+    ],
+    "events": [
+      {
+        "frame": 161,
+        "time_s": 5.366666666666666,
+        "kind": "hit",
+        "player": null,
+        "status": "candidate",
+        "source": "detector_candidate"
+      }
+    ],
+    "rallies": [],
+    "source": {
+      "fps": 30.0,
+      "frames": 281,
+      "width": 1920,
+      "height": 1080,
+      "csv_sha256": "b50fc208ca29f7f33a7496e10316a79617a064f1c85356c37985493cc5ffa39a",
+      "inference": {
+        "origin": "supplementary_shuttle_pass",
+        "input_sha256": "47d888b3d4a9eecf13cb5cb14fafc69a511235b59143655a955ffe54713b310e",
+        "tracknet_sha256": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
+        "threshold": 0.15,
+        "eval_mode": "nonoverlap"
+      }
+    },
+    "parameters": {
+      "window_s": 0.08,
+      "min_interval_s": 0.18,
+      "turn_degrees": 45,
+      "velocity_change_diagonals_per_s": 0.15
+    },
+    "method": "Unverified camera-space detector positions; no interpolation. Direction changes are hit candidates, not confirmed contacts. Rally statistics use manually confirmed boundaries and events only."
+  }
 }

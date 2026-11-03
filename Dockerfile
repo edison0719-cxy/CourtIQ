@@ -9,7 +9,7 @@ COPY requirements/analysis.txt ./requirements.txt
 # CPU wheels avoid installing the CUDA runtime in a CPU container.
 RUN pip install --index-url https://download.pytorch.org/whl/cpu torch==2.12.1 torchvision==0.27.1 \
     && pip install -r requirements.txt
-COPY app.py pipeline.py analysis.py research.py services.py cloud_runner.py UPSTREAM_VERSIONS.json ./
+COPY app.py pipeline.py analysis.py research.py services.py shuttle.py cloud_runner.py UPSTREAM_VERSIONS.json ./
 COPY static ./static
 COPY vendor/badminton-pipeline-repro/scripts ./vendor/badminton-pipeline-repro/scripts
 RUN useradd --create-home --uid 10001 courtiq && mkdir -p /app/vendor/badminton-pipeline-repro/weights /app/data \

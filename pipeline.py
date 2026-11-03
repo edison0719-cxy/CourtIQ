@@ -128,11 +128,14 @@ def execute(session, run_dir, options, update):
     update('running','空间统计与图表')
     from analysis import generate_report
     report=generate_report(track_csv,run_dir)
+    from shuttle import session_shuttle
+    report['shuttle']=session_shuttle(run_dir,session,report)
+    (run_dir/'summary.json').write_text(json.dumps(report,ensure_ascii=False,allow_nan=False,indent=2),encoding='utf-8')
     update('running','导出浏览器兼容视频')
     final_video=run_dir/'analysis.mp4'
     run_command(['ffmpeg','-hide_banner','-loglevel','error','-y','-i',raw_overlay,'-i',input_video,
                  '-map','0:v:0','-map','1:a?','-c:v','libx264','-preset','veryfast','-crf','20',
-                 '-pix_fmt','yuv420p','-c:a','aac','-shortest','-movflags','+faststart',final_video],log,env)
+                 '-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',final_video],log,env)
     metadata={'session_id':session['id'],'calibration':points,'options':options,
               'coordinate_system':'full court: 6.1 m × 13.4 m; origin at far-left baseline corner',
               'sources':runtime_status()['sources'],'methodology':report['methodology']}

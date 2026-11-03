@@ -3,8 +3,16 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const os=require('node:os');
-const {createReader,positionAt}=require('../static/published.js');
+const {createReader,positionAt,heatColor}=require('../static/published.js');
 const root=path.resolve(__dirname,'..');
+
+test('heat colors distinguish zero data, low density and peak density',()=>{
+ assert.equal(heatColor(0,10),null);
+ assert.equal(heatColor(NaN,10),null);
+ assert.deepEqual(heatColor(10,10),[230,53,66]);
+ const low=heatColor(1,10);assert(low[2]>low[0]);
+ assert.deepEqual(heatColor(20,10),heatColor(10,10));
+});
 
 function reader(){return createReader(async url=>{
  const file=path.join(root,'published',url.replace('/results/',''));
@@ -101,12 +109,32 @@ test('static build publishes data only and rejects private/stale files',async()=
  }finally{await fs.rm(temp,{recursive:true,force:true});}
 });
 
-test('static deployment has no compute, storage, authentication or paid bindings',async()=>{
+test('static deployment has no analysis compute, storage or authentication bindings',async()=>{
  const config=JSON.parse(await fs.readFile(path.join(root,'wrangler.site.jsonc'),'utf8'));
- for(const key of ['main','containers','r2_buckets','d1_databases','queues','durable_objects','vars'])assert.equal(config[key],undefined);
+ for(const key of ['containers','r2_buckets','d1_databases','queues','durable_objects','vars'])assert.equal(config[key],undefined);
  assert.equal(config.workers_dev,true);
  const pkg=JSON.parse(await fs.readFile(path.join(root,'package.json'),'utf8'));
  assert.match(pkg.scripts['cloud:deploy:git'],/wrangler.site.jsonc/);
+});
+
+test('published shuttle predictions are tied to their exact source CSV and video',async()=>{
+ const {buildSite}=await import('../build-site.mjs');
+ const catalog=JSON.parse(await fs.readFile(path.join(root,'published/catalog.json')));
+ const record=catalog.sessions.find(s=>s.shuttle&&!s.is_example);
+ assert.ok(record,'Publish actual supplementary inference rather than a placeholder');
+ const temp=await fs.mkdtemp(path.join(os.tmpdir(),'courtiq-shuttle-provenance-'));
+ try{
+  for(const name of ['published','static','THIRD_PARTY.md','UPSTREAM_VERSIONS.json'])await fs.cp(path.join(root,name),path.join(temp,name),{recursive:true});
+  await buildSite(temp);
+  const csv=path.join(temp,'published',record.id,'shuttle.csv');
+  const bytes=await fs.readFile(csv);await fs.appendFile(csv,'corruption');
+  await assert.rejects(buildSite(temp),/Shuttle source fingerprint/);
+  await fs.writeFile(csv,bytes);
+  const file=path.join(temp,'published',record.id,'manifest.json');
+  const manifest=JSON.parse(await fs.readFile(file));manifest.shuttle.inference.input_sha256='0'.repeat(64);
+  await fs.writeFile(file,JSON.stringify(manifest));
+  await assert.rejects(buildSite(temp),/another video/);
+ }finally{await fs.rm(temp,{recursive:true,force:true});}
 });
 
 test('a run with only one observed player does not require an invented second report',async()=>{

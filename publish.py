@@ -55,6 +55,8 @@ def export_session(folder, destination, title, venue):
             raise ValueError(f'Invalid {key}.')
     run = folder / 'runs' / session['run_id']
     summary = json.loads((run / 'summary.json').read_text(encoding='utf-8'))
+    from shuttle import session_shuttle
+    summary['shuttle'] = session_shuttle(run, session, summary)
     public['players'] = list(summary['players'])
     if not public['players'] or any(player not in ('near', 'far') for player in public['players']):
         raise ValueError('No valid observed players to publish.')
@@ -65,10 +67,15 @@ def export_session(folder, destination, title, venue):
                     trajectory_sha256=file_sha256(run / 'players.csv'),
                     source_sha256=file_sha256(folder / session.get('source_file', 'source.mp4')),
                     upstream=json.loads((ROOT / 'UPSTREAM_VERSIONS.json').read_text()))
+    if summary['shuttle']['source']['csv_sha256']:
+        public['shuttle'] = {'file': 'shuttle.csv', 'sha256': summary['shuttle']['source']['csv_sha256'], 'run_id': public['run_id']}
+        manifest['shuttle'] = summary['shuttle']['source']
     target = destination / public['id']
     target.mkdir(parents=True, exist_ok=True)
     write_json(target / 'session.json', public)
     write_json(target / 'summary.json', summary)
+    if public.get('shuttle'):
+        shutil.copyfile(run / 'shuttle/input_ball.csv', target / 'shuttle.csv')
     write_json(target / 'manifest.json', manifest)
     for player in summary['players']:
         report = session_research_data({**public, 'evaluations': {}}, run, player)

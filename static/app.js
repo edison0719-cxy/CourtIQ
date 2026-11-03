@@ -44,6 +44,20 @@ const playerName=p=>{
  return name===(p==='near'?'近端球员':'远端球员')?t(name):name;
 };
 const playerData=()=>result?.players[player()];
+const shuttleUI=window.CourtIQShuttle.create({
+ translate:t,
+ save:async({id,run_id,decisions})=>{
+  const report=await api(`/api/sessions/${id}/events`,jsonRequest('PUT',{run_id,decisions}));
+  if(session?.id===id&&session.run_id===run_id){session.event_review={run_id,decisions};if(result)result.shuttle=report;}
+  return report;
+ },
+ seek:time=>{
+  const video=$('match-video');video.pause();
+  if(!['original','analysis'].includes(view)){view='original';renderVideo();renderResults();}
+  const seek=()=>{video.currentTime=Math.min(time,video.duration||time);};
+  if(video.readyState>=1)seek();else video.addEventListener('loadedmetadata',seek,{once:true});
+ }
+});
 const statusNames={draft:'待分析',queued:'排队中',running:'分析中',completed:'已完成',failed:'需处理'};
 const sessionTitle = s => s.is_example ? t('示例比赛') : s.title;
 
@@ -223,7 +237,7 @@ function loadPublishedVideo(record,media,cursor){
  video.src=sessionFile(record.id,media.file);video.load();
 }
 window.addEventListener('pagehide',event=>{if(showcase&&!event.persisted)releaseAnimation();});
-document.querySelectorAll('#video-tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.view;renderVideo();});
+document.querySelectorAll('#video-tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.view;renderVideo();renderResults();});
 document.querySelectorAll('[data-published-view]').forEach(button=>button.onclick=()=>{
  stopReplay();view=button.dataset.publishedView;
  if(view==='trajectory')replayTime=Math.min(replayTime,result?.analysis_duration_s||0);
@@ -285,6 +299,12 @@ async function loadResults() {
  renderResults();
 }
 function renderResults() {
+ if(result){
+  for(const option of $('player-select').options)option.disabled=!result.players[option.value];
+  if(!result.players[player()])$('player-select').value=Object.keys(result.players)[0];
+ }
+ const shuttleURL=result?.shuttle?.source.csv_sha256?(showcase?fileURL('shuttle.csv'):fileURL('shuttle/input_ball.csv')):null;
+ shuttleUI.render(result?.shuttle,result?session:null,view,!showcase&&runtime?.deployment!=='cloud',shuttleURL);
  $('setup-controls').hidden=!!result;$('court-results').hidden=!result;$('inspector-title').textContent=t(result?'球场空间分析':'分析设置');
  $('export-links').hidden=!result;
  const media=showcase?(view==='animation'?session?.animation:session?.videos?.[view]):null;
@@ -314,8 +334,9 @@ function drawCourt() {
  for(let d=0;d<=length;d+=.5){ctx.beginPath();ctx.moveTo(ox+d*scale,oy-12);ctx.lineTo(ox+d*scale,oy+ch+12);ctx.stroke();}
  for(let d=0;d<=width;d+=.5){ctx.beginPath();ctx.moveTo(ox-12,oy+d*scale);ctx.lineTo(ox+cw+12,oy+d*scale);ctx.stroke();}
  if(map==='heatmap'){
-  const values=p.heatmap,max=Math.max(...values.flat(),1);
-  values.forEach((row,y)=>row.forEach((n,x)=>{if(n>0){const intensity=Math.sqrt(n/max);ctx.fillStyle=`rgba(${Math.round(192-176*intensity)},${Math.round(232-63*intensity)},${Math.round(131+20*intensity)},${.35+.6*intensity})`;ctx.fillRect(ox+y*cw/26,oy+(11-x)*ch/12,cw/26+.3,ch/12+.3);}}));
+  const values=p.heatmap,max=Math.max(...values.flat(),1),total=values.flat().reduce((a,b)=>a+b,0);
+  values.forEach((row,y)=>row.forEach((n,x)=>{const color=window.CourtIQPublished.heatColor(n,max);if(color){ctx.fillStyle=`rgb(${color.join(',')})`;ctx.fillRect(ox+y*cw/values.length,oy+(row.length-1-x)*ch/row.length,cw/values.length+.3,ch/row.length+.3);}}));
+  $('heatmap-peak').textContent=t('峰值 {percent}%',{percent:total?(max/total*100).toFixed(1):'0.0'});
  }else if(map==='hull'&&p.hull.length>=3){ctx.beginPath();p.hull.forEach((a,i)=>i?ctx.lineTo(...xy(...a)):ctx.moveTo(...xy(...a)));ctx.closePath();ctx.fillStyle='#10a99724';ctx.fill();ctx.strokeStyle='#10a997';ctx.lineWidth=1.8;ctx.stroke();}
  else if(map==='trajectory'){
   ctx.strokeStyle=player()==='near'?'#10a997':'#2468eb';ctx.lineWidth=1.6;ctx.beginPath();
@@ -333,6 +354,7 @@ function drawCourt() {
  const position=showcase?window.CourtIQPublished.positionAt(p.trajectory,currentTime,1/session.video.fps+.001):p.trajectory.reduce((best,a)=>Math.abs(a[1]-currentTime)<Math.abs(best[1]-currentTime)?a:best,p.trajectory[0]);
  if(position&&Math.abs(position[1]-currentTime)<.3){const [x,y]=xy(position[2],position[3]);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle='#2468eb';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
  $('map-label').textContent=t({heatmap:'观测位置频率',trajectory:'观测移动轨迹',hull:'观测位置包络'}[map]);
+ $('heatmap-peak').hidden=map!=='heatmap';
 }
 $('match-video').ontimeupdate=()=>{if(showcase&&!$('match-video').hidden)replayTime=$('match-video').currentTime;drawCourt();};
 

@@ -164,7 +164,28 @@ select { cursor: pointer; padding-right: 6px; }
 .map-legend { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #7895aa; }
 .map-legend > span:first-child { display: flex; align-items: center; gap: 4px; }
 .legend-square { width: 7px; height: 7px; border: 1px solid #d4e9ec; background: #eff8ee; }
-.legend-gradient { width: 75px; height: 5px; background: linear-gradient(90deg,#e8f8cf,#84d8a1,#10a997); border-radius: 4px; }
+.legend-gradient { width: 110px; height: 8px; background: linear-gradient(90deg,#2454dc,#22c5d8,#ffd74a,#e63542); border-radius: 4px; }
+#shuttle-overlay { position: absolute; pointer-events: none; z-index: 2; }
+.shuttle-panel { margin: 20px 0; }
+.shuttle-panel .panel-bar { flex-wrap: wrap; gap: 12px; }
+.shuttle-panel h2 { margin-right: auto; }
+.shuttle-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.shuttle-body { padding: 20px; }
+.shuttle-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 18px; }
+.shuttle-metrics span { display: block; color: #648098; font-size: 12px; }
+.shuttle-metrics strong { display: block; color: #173a55; font: 700 26px ui-monospace,monospace; margin-top: 5px; }
+.shuttle-editor { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.shuttle-editor select { width: auto; min-width: 120px; }
+.shuttle-events { max-height: 280px; overflow: auto; }
+.shuttle-events p { color: #648098; margin: 10px 0; }
+.shuttle-event { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; border-bottom: 1px solid #e2edf5; padding: 10px 0; font-size: 12px; }
+.shuttle-event[data-status="candidate"] { border-left: 3px solid #e6b13e; padding-left: 10px; }
+.shuttle-event[data-status="rejected"] { opacity: .6; }
+.shuttle-event button.text-link { border: 0; border-radius: 5px; background: #edf4ff; padding: 7px 10px; min-height: 30px; font-size: 12px; }
+.shuttle-event button.text-link:hover { background: #dceaff; }
+.shuttle-event button:first-child { min-width: 70px; font-variant-numeric: tabular-nums; }
+#shuttle-message { color: #b34425; }
+@media(max-width:600px){.shuttle-metrics{grid-template-columns:repeat(2,1fr)}.shuttle-body{padding:15px}.shuttle-event{gap:10px}.legend-gradient{width:70px}}
 #map-label { margin-left: auto; font-size: 9px; }
 #adjust-button { margin-top: 19px; }
 .metrics-row { display: grid; grid-template-columns: repeat(4,1fr); margin: 17px 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }

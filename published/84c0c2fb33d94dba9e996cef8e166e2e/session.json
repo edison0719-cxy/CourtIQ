@@ -40,6 +40,11 @@
   "players": [
     "near"
   ],
+  "shuttle": {
+    "file": "shuttle.csv",
+    "sha256": "b50fc208ca29f7f33a7496e10316a79617a064f1c85356c37985493cc5ffa39a",
+    "run_id": "65796aa269924e5ba5edfcf2c2da6ea0"
+  },
   "animation": {
     "file": "trajectory.mp4",
     "poster": "animation-poster.jpg",

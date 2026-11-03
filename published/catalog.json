@@ -43,6 +43,11 @@
       "players": [
         "near"
       ],
+      "shuttle": {
+        "file": "shuttle.csv",
+        "sha256": "b50fc208ca29f7f33a7496e10316a79617a064f1c85356c37985493cc5ffa39a",
+        "run_id": "65796aa269924e5ba5edfcf2c2da6ea0"
+      },
       "animation": {
         "file": "trajectory.mp4",
         "poster": "animation-poster.jpg",
@@ -123,6 +128,11 @@
         "near",
         "far"
       ],
+      "shuttle": {
+        "file": "shuttle.csv",
+        "sha256": "ff95d1e8a0516cd378d783d745ff9f8a1c7ca1446703893971645a2b05aec044",
+        "run_id": "74047d61ff9e47899652932edf471f7e"
+      },
       "animation": {
         "file": "trajectory.mp4",
         "poster": "animation-poster.jpg",
@@ -202,6 +212,11 @@
       "players": [
         "near"
       ],
+      "shuttle": {
+        "file": "shuttle.csv",
+        "sha256": "a8e3203d879591d5706d31174821e07af4df4b463a502b69df4c356f5e05270b",
+        "run_id": "fc115ffbc214422cb87f643515ef926c"
+      },
       "animation": {
         "file": "trajectory.mp4",
         "poster": "animation-poster.jpg",
@@ -282,6 +297,11 @@
         "near",
         "far"
       ],
+      "shuttle": {
+        "file": "shuttle.csv",
+        "sha256": "a8664922f71eb40fffae5596b3ec6a2bf7856a497e2d64d8ebb9d3917e704bcd",
+        "run_id": "299705b4e6534031b86ee0d50080a9a4"
+      },
       "animation": {
         "file": "trajectory.mp4",
         "poster": "animation-poster.jpg",
@@ -320,5 +340,5 @@
       }
     }
   ],
-  "published_at": "2026-11-02T08:38:48.120009+00:00"
+  "published_at": "2026-11-03T04:30:57.863576+00:00"
 }

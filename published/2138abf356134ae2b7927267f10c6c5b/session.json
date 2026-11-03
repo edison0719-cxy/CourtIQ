@@ -41,6 +41,11 @@
     "near",
     "far"
   ],
+  "shuttle": {
+    "file": "shuttle.csv",
+    "sha256": "ff95d1e8a0516cd378d783d745ff9f8a1c7ca1446703893971645a2b05aec044",
+    "run_id": "74047d61ff9e47899652932edf471f7e"
+  },
   "animation": {
     "file": "trajectory.mp4",
     "poster": "animation-poster.jpg",

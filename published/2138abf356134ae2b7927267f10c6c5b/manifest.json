@@ -57,5 +57,19 @@
       "TrackNet_best.pt": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
       "yolov8s-pose.pt": "234314cd8baf62616791aceb9ea6ad5c19f26cf6c0d8f3a1bfce1e23b186cfb3"
     }
+  },
+  "shuttle": {
+    "fps": 30.0,
+    "frames": 311,
+    "width": 1920,
+    "height": 1080,
+    "csv_sha256": "ff95d1e8a0516cd378d783d745ff9f8a1c7ca1446703893971645a2b05aec044",
+    "inference": {
+      "origin": "supplementary_shuttle_pass",
+      "input_sha256": "dce7ce8a9e5c6e7dffa9084501fe57a83386f85609f1acf5a28a7bb4afc68ee4",
+      "tracknet_sha256": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
+      "threshold": 0.15,
+      "eval_mode": "nonoverlap"
+    }
   }
 }

@@ -9,7 +9,7 @@ test('translation module exists', () => {
 
 test('translations cover all declared interface strings', () => {
   const { english, translate } = require('../static/i18n.js');
-  const html = fs.readFileSync(path.join(__dirname, '../static/index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../static/index.html'), 'utf8')+fs.readFileSync(path.join(__dirname, '../static/shuttle.js'), 'utf8');
   const keys = [...html.matchAll(/data-i18n(?:-placeholder|-aria-label|-title)?="([^"]+)"/g)].map(m => m[1]);
   assert.ok(keys.length > 60, 'The whole interface must participate, not only the header');
   for (const key of keys) {

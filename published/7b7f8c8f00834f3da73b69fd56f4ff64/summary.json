@@ -4621,5 +4621,60 @@
     "Hull is the convex envelope of observed positions, not instantaneous reachability or tactical control.",
     "Mean position and covariance describe the selected clip; they are not recovery or optimal-position estimates.",
     "Video perspective, ankle localization, occlusion and identity switches can bias all estimates. Manual review is required."
-  ]
+  ],
+  "shuttle": {
+    "schema_version": 1,
+    "status": "sparse",
+    "valid_observations": 4,
+    "observation_rate": 0.009876543209876543,
+    "trajectory": [
+      [
+        296,
+        9.866666666666667,
+        1916.0,
+        585.0
+      ],
+      [
+        297,
+        9.9,
+        1916.0,
+        585.0
+      ],
+      [
+        298,
+        9.933333333333334,
+        1916.0,
+        585.0
+      ],
+      [
+        299,
+        9.966666666666667,
+        1916.0,
+        585.0
+      ]
+    ],
+    "events": [],
+    "rallies": [],
+    "source": {
+      "fps": 30.0,
+      "frames": 405,
+      "width": 1920,
+      "height": 1080,
+      "csv_sha256": "a8e3203d879591d5706d31174821e07af4df4b463a502b69df4c356f5e05270b",
+      "inference": {
+        "origin": "supplementary_shuttle_pass",
+        "input_sha256": "f2b6ffe58381ddc8cc0b6d9bbaba57fd08d3cdc4ec3549cc367ed08014e2cd50",
+        "tracknet_sha256": "b8b8e61775eca5dc6f311a704761419c5e9524e74db6739fce057f3ff27a3e28",
+        "threshold": 0.15,
+        "eval_mode": "nonoverlap"
+      }
+    },
+    "parameters": {
+      "window_s": 0.08,
+      "min_interval_s": 0.18,
+      "turn_degrees": 45,
+      "velocity_change_diagonals_per_s": 0.15
+    },
+    "method": "Unverified camera-space detector positions; no interpolation. Direction changes are hit candidates, not confirmed contacts. Rally statistics use manually confirmed boundaries and events only."
+  }
 }
